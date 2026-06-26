@@ -266,6 +266,12 @@ button:focus-visible{outline:2px solid var(--vermilion); outline-offset:2px;}
 .practicebar{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--hold); color:#fff; padding:9px 16px; font-size:12.5px; font-weight:800;}
 .practice-exit{background:rgba(255,255,255,.22); color:#fff; border:none; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit;}
 
+
+.practicebar{flex-wrap:wrap;}
+.practice-tabs{display:flex; gap:4px; background:rgba(255,255,255,.18); padding:3px; border-radius:9px;}
+.ptab{background:transparent; border:none; color:#fff; padding:5px 14px; border-radius:7px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit; opacity:.8;}
+.ptab.on{background:#fff; color:var(--hold); opacity:1;}
+
 </style>
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#211E1C" />
@@ -501,6 +507,8 @@ function App() {
     const [auth, setAuth] = useState(loadAuth()); // ログイン中ユーザー（本番）
     const [panel, setPanel] = useState(null); // null | 'menu' | 'pw' | 'accounts'
     const [preview, setPreview] = useState(false); // 管理者がアシスタント画面を体験中
+    const [practiceSubs, setPracticeSubs] = useState([]); // 練習用データ（保存しない）
+    const [practiceRole, setPracticeRole] = useState("assistant"); // 練習中の表示役割
     const load = useCallback(async () => {
         try {
             const rows = await apiList();
@@ -570,10 +578,26 @@ function App() {
         }
         setSubs((p) => p.filter((s) => s.id !== id));
     }, [conn, subs]);
-    // 練習モード：提出しても保存しない
-    const submitPractice = useCallback(async () => {
-        return 0; // 何もしない
+    // 練習モード：提出しても本物には保存せず、画面内の練習データに足す
+    const submitPractice = useCallback(async ({ dept, who, term, item, photos }) => {
+        const at = new Date().toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
+        const add = photos.map((p) => ({ id: newId(), dept, who, term, item, photo: p, status: "pending", at, note: "" }));
+        setPracticeSubs((prev) => [...prev, ...add]);
+        return photos.length;
     }, []);
+    const practiceUpdate = useCallback((id, status, note = "") => {
+        setPracticeSubs((p) => p.map((s) => (s.id === id ? { ...s, status, note } : s)));
+    }, []);
+    const practiceUpdateMany = useCallback((ids, status, note = "") => {
+        const set = {};
+        ids.forEach((x) => (set[x] = true));
+        setPracticeSubs((p) => p.map((s) => (set[s.id] ? { ...s, status, note } : s)));
+    }, []);
+    const practiceRemove = useCallback((id) => {
+        setPracticeSubs((p) => p.filter((s) => s.id !== id));
+    }, []);
+    const startPractice = () => { setPracticeSubs([]); setPracticeRole("assistant"); setPreview(true); setPanel(null); };
+    const endPractice = () => { setPreview(false); setPracticeSubs([]); };
     // 接続確認中
     if (conn === "loading") {
         return (React.createElement("div", { className: "root" },
@@ -596,29 +620,34 @@ function App() {
     const role = auth ? auth.role : "assistant";
     const me = auth ? auth.name : DEPTS[dept].roster[0];
     const canSwitchDept = !auth || auth.role === "manager"; // 管理者は両事業部を見られる
-    // 管理者が練習モード中ならアシスタント画面を表示
-    const showAssistant = role === "assistant" || (role === "manager" && preview);
+    // 練習モード中は練習データ・練習役割で表示
+    const inPractice = role === "manager" && preview;
+    const viewRole = inPractice ? practiceRole : role;
+    const viewSubs = inPractice ? practiceSubs : subs;
     return (React.createElement("div", { className: "root" },
         React.createElement(Brandbar, { auth: auth, onLogout: logout, onMenu: () => setPanel("menu") }),
-        role === "manager" && preview && (React.createElement("div", { className: "practicebar" },
-            React.createElement("span", null, "\u7DF4\u7FD2\u30E2\u30FC\u30C9\uFF08\u63D0\u51FA\u306F\u4FDD\u5B58\u3055\u308C\u307E\u305B\u3093\uFF09"),
-            React.createElement("button", { className: "practice-exit", onClick: () => setPreview(false) }, "\u7BA1\u7406\u306B\u623B\u308B"))),
+        inPractice && (React.createElement("div", { className: "practicebar" },
+            React.createElement("span", null, "\u7DF4\u7FD2\u30E2\u30FC\u30C9\uFF08\u4FDD\u5B58\u3055\u308C\u307E\u305B\u3093\uFF09"),
+            React.createElement("div", { className: "practice-tabs" },
+                React.createElement("button", { className: "ptab " + (practiceRole === "assistant" ? "on" : ""), onClick: () => setPracticeRole("assistant") }, "\u63D0\u51FA"),
+                React.createElement("button", { className: "ptab " + (practiceRole === "manager" ? "on" : ""), onClick: () => setPracticeRole("manager") }, "\u627F\u8A8D")),
+            React.createElement("button", { className: "practice-exit", onClick: endPractice }, "\u7D42\u4E86"))),
         React.createElement("div", { className: "deptbar" },
             React.createElement("span", { className: "deptbar-label" }, "\u4E8B\u696D\u90E8"),
             canSwitchDept
                 ? Object.entries(DEPTS).map(([k, v]) => (React.createElement("button", { key: k, className: "dept-chip " + (dept === k ? "on" : ""), onClick: () => setDept(k) }, v.label)))
                 : React.createElement("span", { className: "dept-fixed" }, DEPTS[dept].label),
             React.createElement("span", { className: "connbadge " + conn, title: "\u4FDD\u5B58\u5148\u306E\u63A5\u7D9A\u72B6\u614B" }, conn === "online" ? "● 保存中" : "デモ表示")),
-        React.createElement("main", { className: "stage" }, showAssistant
-            ? React.createElement(AssistantView, { dept: dept, me: preview ? DEPTS[dept].roster[0] : me, setMe: preview ? null : undefined, fixedName: !preview && !!auth, practice: preview, subs: subs, onSubmit: preview ? submitPractice : submitMany, onRemove: preview ? (() => { }) : removeSub, onZoom: setZoom })
-            : React.createElement(ManagerView, { dept: dept, subs: subs, onUpdate: updateSub, onUpdateMany: updateMany, onReload: load, onZoom: setZoom })),
+        React.createElement("main", { className: "stage" }, viewRole === "assistant"
+            ? React.createElement(AssistantView, { dept: dept, me: inPractice ? DEPTS[dept].roster[0] : me, setMe: inPractice ? null : undefined, fixedName: !inPractice && !!auth, practice: inPractice, subs: viewSubs, onSubmit: inPractice ? submitPractice : submitMany, onRemove: inPractice ? practiceRemove : removeSub, onZoom: setZoom })
+            : React.createElement(ManagerView, { dept: dept, subs: viewSubs, onUpdate: inPractice ? practiceUpdate : updateSub, onUpdateMany: inPractice ? practiceUpdateMany : updateMany, onReload: inPractice ? null : load, onZoom: setZoom })),
         zoom && React.createElement(Lightbox, { src: typeof zoom === "string" ? zoom : zoom.src, onConfirmDelete: (typeof zoom === "object" && zoom.deleteId)
-                ? async () => { await removeSub(zoom.deleteId); setZoom(null); }
+                ? async () => { (inPractice ? practiceRemove : removeSub)(zoom.deleteId); setZoom(null); }
                 : null, onClose: () => setZoom(null) }),
         panel === "menu" && (React.createElement(SheetPanel, { title: "\u30E1\u30CB\u30E5\u30FC", onClose: () => setPanel(null) },
-            auth && auth.role === "manager" && (React.createElement("button", { className: "menu-item", onClick: () => { setPreview(true); setPanel(null); } },
+            auth && auth.role === "manager" && (React.createElement("button", { className: "menu-item", onClick: startPractice },
                 React.createElement(User, { size: 17 }),
-                " \u30A2\u30B7\u30B9\u30BF\u30F3\u30C8\u753B\u9762\u3092\u898B\u308B\uFF08\u7DF4\u7FD2\uFF09")),
+                " \u7DF4\u7FD2\u30E2\u30FC\u30C9\uFF08\u63D0\u51FA\u2192\u627F\u8A8D\u3092\u8A66\u3059\uFF09")),
             React.createElement("button", { className: "menu-item", onClick: () => setPanel("pw") },
                 React.createElement(Key, { size: 17 }),
                 " \u30D1\u30B9\u30EF\u30FC\u30C9\u3092\u5909\u66F4"),
