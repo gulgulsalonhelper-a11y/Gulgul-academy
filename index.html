@@ -742,7 +742,7 @@ function LoginView({ onLoggedIn }) {
         setBusy(true);
         setErr("");
         try {
-            const res = await apiPost({ action: "login", id: id.trim(), password: pw });
+            const res = await apiPost({ action: "login", id: id.replace(/\s+/g, ""), password: pw });
             if (res && res.ok) {
                 const user = { id: res.id, name: res.name, dept: res.dept, role: res.role, mustChange: !!res.firstTime, _temp: pw };
                 onLoggedIn(user);
@@ -767,7 +767,7 @@ function LoginView({ onLoggedIn }) {
             React.createElement("p", { className: "muted sm" }, "\u914D\u3089\u308C\u305FID\u3068\u4EEE\u30D1\u30B9\u30EF\u30FC\u30C9\u3092\u5165\u308C\u3066\u304F\u3060\u3055\u3044"),
             React.createElement("label", { className: "fld" },
                 React.createElement("span", { className: "fld-l" }, "ID"),
-                React.createElement("input", { className: "fld-i", value: id, onChange: (e) => setId(e.target.value), autoCapitalize: "none", autoCorrect: "off", placeholder: "\u4F8B\uFF1A\u68B6\u5185\u5FC3\u7D50" })),
+                React.createElement("input", { className: "fld-i", value: id, onChange: (e) => setId(e.target.value), autoCapitalize: "none", autoCorrect: "off", placeholder: "\u30D5\u30EB\u30CD\u30FC\u30E0" })),
             React.createElement("label", { className: "fld" },
                 React.createElement("span", { className: "fld-l" }, "\u30D1\u30B9\u30EF\u30FC\u30C9"),
                 React.createElement("input", { className: "fld-i", type: "password", value: pw, onChange: (e) => setPw(e.target.value), placeholder: "\u30D1\u30B9\u30EF\u30FC\u30C9" })),
