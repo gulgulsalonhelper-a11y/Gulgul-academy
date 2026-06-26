@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>GULGUL ACADEMY</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+:root{
+  --bg:#E7E4DD; --paper:#FFFFFF; --ink:#211E1C; --muted:#7C746B;
+  --line:#DCD7CE; --line2:#ECE8E1; --vermilion:#C5402E; --vermilion-d:#A8331F; --ok:#2E7D5B; --hold:#C8862E;
+}
+*{box-sizing:border-box;}
+html,body{margin:0; padding:0;}
+.root{
+  min-height:100vh; background:var(--bg); color:var(--ink);
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.topbar{
+  position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between;
+  padding:13px 16px; background:rgba(231,228,221,.93); backdrop-filter:saturate(1.1) blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex; align-items:baseline; gap:7px;}
+.brand-mark{font-weight:800; letter-spacing:.13em; font-size:17px;}
+.brand-sub{font-size:9.5px; letter-spacing:.3em; color:var(--muted); font-weight:700;}
+.roleswitch{display:flex; gap:4px; background:var(--line2); padding:3px; border-radius:11px; border:1px solid var(--line);}
+.role-btn{display:flex; align-items:center; gap:5px; border:none; background:transparent; padding:7px 10px;
+  border-radius:8px; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s;}
+.role-btn.on{background:var(--paper); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.deptbar{display:flex; align-items:center; gap:8px; max-width:540px; margin:0 auto; padding:12px 16px 0;}
+.deptbar-label{font-size:11px; font-weight:800; color:var(--muted); letter-spacing:.08em;}
+.dept-chip{background:var(--paper); border:1.5px solid var(--line); border-radius:20px; padding:6px 15px;
+  font-size:13px; font-weight:700; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s;}
+.dept-chip.on{background:var(--ink); border-color:var(--ink); color:#fff;}
+.connbadge{margin-left:auto; font-size:10.5px; font-weight:700; padding:5px 10px; border-radius:20px; white-space:nowrap;}
+.connbadge.online{background:rgba(46,125,91,.14); color:var(--ok);}
+.connbadge.loading{background:var(--line2); color:var(--muted);}
+.connbadge.demo{background:rgba(200,134,46,.14); color:var(--hold);}
+.fbtn.reload{margin-left:auto; padding:8px 12px; display:inline-flex; align-items:center;}
+.stage{max-width:540px; margin:0 auto; padding:14px 16px 64px;}
+.col{display:flex; flex-direction:column; gap:14px;}
+.card{background:var(--paper); border:1px solid var(--line); border-radius:16px;}
+.pad{padding:18px;}
+.h2{font-size:18px; font-weight:800; margin:14px 0 2px;}
+.h3{font-size:14px; font-weight:800; margin:0 0 12px;}
+.muted{color:var(--muted);} .sm{font-size:12.5px; margin:2px 0 0;}
+.whoami{display:flex; align-items:center; gap:10px; padding:2px 4px;}
+.whoami-label{font-size:11px; font-weight:800; color:var(--muted); letter-spacing:.08em;}
+.whoami-select{font-family:inherit; font-size:15px; font-weight:800; color:var(--ink); border:none;
+  background:transparent; border-bottom:2px solid var(--ink); padding:2px; cursor:pointer;}
+.whoami-hint{font-size:11px; color:var(--muted); margin-left:auto;}
+.flash{display:flex; align-items:center; gap:7px; background:var(--ok); color:#fff; padding:11px 14px;
+  border-radius:12px; font-size:13.5px; font-weight:700; animation:slideIn .3s ease;}
+@keyframes slideIn{from{opacity:0; transform:translateY(-6px);}to{opacity:1; transform:none;}}
+.stepline{display:flex; align-items:center; gap:6px; margin-bottom:4px;}
+.step{display:flex; align-items:center; gap:6px; opacity:.4;}
+.step.done{opacity:1;}
+.step-dot{width:22px; height:22px; border-radius:50%; background:var(--line2); color:var(--muted);
+  display:grid; place-items:center; font-size:12px; font-weight:800;}
+.step.done .step-dot{background:var(--ink); color:#fff;}
+.step.now .step-dot{background:var(--vermilion); color:#fff;}
+.step-label{font-size:12px; font-weight:700;}
+.step-bar{flex:1; height:2px; background:var(--line); border-radius:2px;}
+.step-bar.done{background:var(--ink);}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;}
+.pick{display:flex; flex-direction:column; gap:3px; align-items:flex-start; background:var(--paper);
+  border:1.5px solid var(--line); border-radius:13px; padding:16px; cursor:pointer; font-family:inherit; transition:all .15s;}
+.pick:hover{border-color:var(--ink); transform:translateY(-1px);}
+.pick-big{font-size:19px; font-weight:800;}
+.pick-sub{font-size:11.5px; color:var(--muted);}
+.back{display:inline-flex; align-items:center; gap:3px; background:none; border:none; color:var(--muted);
+  font-size:12.5px; font-weight:700; cursor:pointer; padding:0; font-family:inherit; margin-bottom:2px;}
+.list{display:flex; flex-direction:column; gap:8px; margin-top:14px;}
+.row{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--paper);
+  border:1.5px solid var(--line); border-radius:12px; padding:14px 15px; cursor:pointer; font-family:inherit;
+  transition:all .15s; text-align:left;}
+.row:hover{border-color:var(--ink);}
+.row-name{font-size:14.5px; font-weight:700;}
+.row-goal{display:flex; align-items:center; gap:4px; font-size:11.5px; color:var(--muted); white-space:nowrap;}
+.dropzone{width:100%; display:flex; flex-direction:column; align-items:center; gap:7px; background:var(--line2);
+  border:2px dashed var(--line); border-radius:14px; padding:34px 16px; margin-top:16px; cursor:pointer;
+  color:var(--ink); font-family:inherit; transition:all .15s;}
+.dropzone:hover{border-color:var(--vermilion); color:var(--vermilion);}
+.dz-main{font-size:15px; font-weight:800;} .dz-sub{font-size:12px; color:var(--muted);}
+.preview{position:relative; margin-top:16px; border-radius:13px; overflow:hidden; border:1px solid var(--line);}
+.preview img{width:100%; display:block; max-height:340px; object-fit:cover; cursor:zoom-in;}
+.preview-x{position:absolute; top:9px; right:9px; width:30px; height:30px; border-radius:50%;
+  background:rgba(0,0,0,.6); color:#fff; border:none; cursor:pointer; display:grid; place-items:center;}
+.submit{width:100%; display:flex; align-items:center; justify-content:center; gap:7px; margin-top:16px;
+  background:var(--ink); color:#fff; border:none; border-radius:12px; padding:15px; font-size:15px;
+  font-weight:800; cursor:pointer; font-family:inherit; transition:all .15s;}
+.submit:hover:not(:disabled){background:#000;}
+.submit:disabled{opacity:.32; cursor:not-allowed;}
+.mine-list{display:flex; flex-direction:column;}
+.mine-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 0; border-bottom:1px solid var(--line2);}
+.mine-row:last-child{border-bottom:none;}
+.mine-text{display:flex; align-items:center; gap:9px; min-width:0; flex-wrap:wrap;}
+.mine-item{font-size:14px; font-weight:600;}
+.tag{font-size:10.5px; font-weight:800; color:var(--vermilion); border:1px solid var(--vermilion); border-radius:6px; padding:2px 6px; white-space:nowrap;}
+.pill{display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:800; padding:4px 9px; border-radius:20px; white-space:nowrap;}
+.pill-ok{background:rgba(46,125,91,.12); color:var(--ok);}
+.pill-hold{background:rgba(200,134,46,.14); color:var(--hold);}
+.pill-wait{background:var(--line2); color:var(--muted);}
+.mine-note{font-size:11.5px; color:var(--hold);}
+.summary{display:flex; background:var(--ink); color:#fff; border-radius:16px; overflow:hidden;}
+.sumcell{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px 8px;}
+.sumnum{font-size:32px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums;}
+.num-hold{color:#E2A94E;}
+.num-ok{color:#7FC4A3;}
+.sumlbl{font-size:11px; color:#bcb6ad; margin-top:6px; letter-spacing:.05em; font-weight:700;}
+.sumdiv{width:1px; background:rgba(255,255,255,.16);}
+.filter{display:flex; gap:7px;}
+.fbtn{background:var(--paper); border:1.5px solid var(--line); border-radius:20px; padding:8px 16px;
+  font-size:13px; font-weight:700; cursor:pointer; color:var(--muted); font-family:inherit;}
+.fbtn.on{background:var(--ink); border-color:var(--ink); color:#fff;}
+.empty{display:flex; flex-direction:column; align-items:center; gap:8px; color:var(--muted); text-align:center;}
+.empty p{margin:0; font-size:13.5px;}
+.mgr-grid{display:flex; flex-direction:column; gap:13px;}
+.subcard{background:var(--paper); border:1px solid var(--line); border-radius:16px; overflow:hidden;}
+.subphoto{position:relative; display:block; width:100%; padding:0; border:none; background:var(--line2);
+  aspect-ratio:16/10; overflow:hidden; cursor:zoom-in; font-family:inherit;}
+.subphoto img{width:100%; height:100%; object-fit:cover;}
+.zoomhint{position:absolute; left:9px; bottom:9px; display:flex; align-items:center; gap:4px;
+  background:rgba(0,0,0,.55); color:#fff; font-size:11px; font-weight:700; padding:4px 8px; border-radius:20px;}
+.ph{width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;}
+.ph-lines{display:flex; flex-direction:column; gap:7px; width:60%;}
+.ph-lines span{height:6px; background:var(--line); border-radius:3px;}
+.ph-lines span:nth-child(2){width:80%;} .ph-lines span:nth-child(4){width:70%;} .ph-lines span:nth-child(5){width:50%;}
+.ph-cap{font-size:11px; color:var(--muted); font-weight:700;}
+.stamp{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-12deg); width:88px; height:88px;
+  border:4px solid var(--vermilion); border-radius:50%; color:var(--vermilion); display:grid; place-items:center;
+  font-weight:900; font-size:24px; line-height:1.05; letter-spacing:.04em;
+  box-shadow:0 0 0 2px rgba(197,64,46,.18) inset; opacity:.92; animation:stampIn .35s cubic-bezier(.2,1.3,.5,1);}
+@keyframes stampIn{0%{opacity:0; transform:translate(-50%,-50%) rotate(-12deg) scale(2.4);}60%{opacity:.95;}100%{opacity:.92; transform:translate(-50%,-50%) rotate(-12deg) scale(1);}}
+.subbody{padding:14px 15px 15px;}
+.subhead{display:flex; align-items:baseline; justify-content:space-between; gap:8px;}
+.subwho{font-size:16px; font-weight:800;}
+.subat{font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums;}
+.submeta{display:flex; align-items:center; gap:8px; margin:8px 0 13px;}
+.subitem{font-size:14px; font-weight:600;}
+.approve{width:100%; display:flex; align-items:center; justify-content:center; gap:7px; background:var(--vermilion);
+  color:#fff; border:none; border-radius:11px; padding:13px; font-size:15px; font-weight:800; cursor:pointer;
+  font-family:inherit; transition:all .15s;}
+.approve:hover{background:var(--vermilion-d);}
+.btnrow{display:flex; gap:8px;}
+.btnrow .approve{flex:1;}
+.holdbtn{background:var(--paper); border:1.5px solid var(--hold); color:var(--hold); border-radius:11px;
+  padding:13px 18px; font-size:14px; font-weight:800; cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap;}
+.holdbtn:hover{background:rgba(200,134,46,.08);}
+.holdbox{display:flex; flex-direction:column; gap:9px;}
+.holdinput{width:100%; border:1.5px solid var(--line); border-radius:11px; padding:11px; font-size:13.5px;
+  font-family:inherit; color:var(--ink); resize:none; background:var(--line2);}
+.holdinput:focus{outline:none; border-color:var(--hold); background:var(--paper);}
+.holdconfirm{flex:1; background:var(--hold); color:#fff; border:none; border-radius:11px; padding:12px;
+  font-size:14.5px; font-weight:800; cursor:pointer; font-family:inherit;}
+.holdcancel{background:none; border:none; color:var(--muted); font-size:13px; font-weight:700; cursor:pointer;
+  font-family:inherit; padding:0 14px;}
+.holdnote{margin:0 0 12px; font-size:13px; color:var(--hold); background:rgba(200,134,46,.1);
+  border-radius:9px; padding:9px 11px; font-weight:600;}
+.stamp.hold{border-color:var(--hold); color:var(--hold); box-shadow:0 0 0 2px rgba(200,134,46,.18) inset;}
+.subcard.isheld{border-color:rgba(200,134,46,.5);}
+.undo{display:inline-flex; align-items:center; gap:5px; background:none; border:none; color:var(--muted);
+  font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; padding:4px 0;}
+.lb{position:fixed; inset:0; z-index:50; background:rgba(20,18,16,.92); display:flex; flex-direction:column; animation:fade .2s ease;}
+@keyframes fade{from{opacity:0;}to{opacity:1;}}
+.lb-bar{display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:14px 16px;}
+.lb-btn{width:42px; height:42px; border-radius:50%; border:none; background:rgba(255,255,255,.12); color:#fff;
+  display:grid; place-items:center; cursor:pointer;}
+.lb-btn:hover{background:rgba(255,255,255,.22);}
+.lb-close{background:rgba(255,255,255,.2);}
+.lb-scale{color:#fff; font-size:13px; font-weight:700; min-width:48px; text-align:center; font-variant-numeric:tabular-nums;}
+.lb-body{flex:1; overflow:auto; display:flex; align-items:center; justify-content:center; padding:0 12px 28px;}
+.lb-body img{max-width:100%; max-height:100%; border-radius:8px; transition:transform .15s; transform-origin:center;}
+.lb-ph{color:#cfc8bf; font-size:14px; text-align:center; padding:40px; border:2px dashed rgba(255,255,255,.2); border-radius:14px;}
+button:focus-visible{outline:2px solid var(--vermilion); outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important;}}
+@media (max-width:380px){.grid2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useMemo, useEffect, useCallback } = React;
+
+/* ===== アイコン（lucideスタイルの簡易SVG） ===== */
+const ICONS = {
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  chevronLeft:'<polyline points="15 18 9 12 15 6"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  rotate:'<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+  user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>',
+  zoomIn:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>',
+  zoomOut:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>',
+};
+function Icon({ n, size = 18 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    dangerouslySetInnerHTML={{ __html: ICONS[n] }} />;
+}
+const Camera=(p)=><Icon n="camera" {...p}/>;
+const Check=(p)=><Icon n="check" {...p}/>;
+const ChevronLeft=(p)=><Icon n="chevronLeft" {...p}/>;
+const Clock=(p)=><Icon n="clock" {...p}/>;
+const Upload=(p)=><Icon n="upload" {...p}/>;
+const X=(p)=><Icon n="x" {...p}/>;
+const RotateCcw=(p)=><Icon n="rotate" {...p}/>;
+const User=(p)=><Icon n="user" {...p}/>;
+const ShieldCheck=(p)=><Icon n="shield" {...p}/>;
+const ZoomIn=(p)=><Icon n="zoomIn" {...p}/>;
+const ZoomOut=(p)=><Icon n="zoomOut" {...p}/>;
+
+/* ===== カリキュラム・名簿 ===== */
+const DEPTS = {
+  regular: {
+    label: "レギュラー",
+    roster: ["大竹 椿咲","河井 心音","村岡 愛莉","渡邉 柚月","青木 花歩","荒 日南多","大塚 杏","大山 華鈴","岡田 彩里","河村 恋羽","梶内 心結","木村 結","行田 歩直","鈴木 里桜","鈴木 凛","佃 澪那","遠山 蒼衣","西牟田 紗季","渡瀬 明日花"],
+    curriculum: {
+      "第1期": [
+        { name:"シャンプー", goal:"10分以内・ドライまで" },
+        { name:"マッサージ", goal:"5分 × 10回" },
+        { name:"トリートメント施術", goal:"モデル5人" },
+        { name:"リタッチ塗布", goal:"12分 × 20回" },
+        { name:"ファッションカラー塗布", goal:"15分 × 10回" },
+        { name:"パーマ剤塗布 & ターバン", goal:"5分 × 10回" },
+        { name:"ストレート塗布", goal:"15分 × 15回" },
+        { name:"ストレートアイロン", goal:"40分 × 10回" },
+        { name:"ヘッドスパ", goal:"自社講習" },
+      ],
+      "第2期": [
+        { name:"ワンレングスブロー", goal:"25分 × 10回" },
+        { name:"ショートブロー", goal:"15分 × 10回" },
+        { name:"マニキュア塗布", goal:"15分 × 10回" },
+        { name:"ワインディング", goal:"20分 × 10回" },
+        { name:"ワインディング2", goal:"20分 × 10回" },
+        { name:"フィニッシュワーク", goal:"計10回" },
+      ],
+      "第3期": [
+        { name:"モデル撮影", goal:"撮影コンテスト等" },
+        { name:"ワンレングス", goal:"25分 × 15回" },
+        { name:"グラデーションボブ", goal:"25分 × 15回" },
+        { name:"ミディアムレイヤー", goal:"25分 × 15回" },
+        { name:"ショート", goal:"25分 × 15回" },
+        { name:"マッシュベーシック", goal:"20分 × 10回" },
+        { name:"ステップレイヤー（刈り上げ）", goal:"25分 × 10回" },
+        { name:"カラー講習", goal:"3回コース" },
+        { name:"前髪と量感調整講習", goal:"講習" },
+        { name:"眉カット講習", goal:"OJTシート提出" },
+      ],
+      "第4期": [
+        { name:"コピーカット", goal:"20スタイル" },
+        { name:"デビュー前面談", goal:"1H" },
+        { name:"店長講習（5人以上）", goal:"2H" },
+        { name:"カウンセリング講習", goal:"2H" },
+        { name:"モデル ショート（あご上）", goal:"13人" },
+        { name:"モデル ボブ（肩上）", goal:"13人" },
+        { name:"モデル ミディアム（鎖骨上）", goal:"11人" },
+        { name:"モデル ロング（鎖骨下）", goal:"7人" },
+        { name:"中間テスト", goal:"採点表を提出" },
+        { name:"モデル メンズ", goal:"13人" },
+        { name:"モデル メンズセンターパート", goal:"13人" },
+        { name:"モデル メンズパーマ", goal:"5人" },
+        { name:"モデル レディースパーマ", goal:"5人" },
+        { name:"モデル 縮毛矯正", goal:"3人" },
+        { name:"最終テスト", goal:"該当ページ参照" },
+      ],
+    },
+  },
+  mens: {
+    label: "メンズ",
+    roster: ["白井 葵","山﨑 娃果","土屋 舞夏","川口 葵","清水 舞鈴","矢野 みゆう","戸田 真唯","近藤 希","大塚 敦史"],
+    curriculum: {
+      "第1期": [
+        { name:"シャンプー", goal:"10分以内・ドライまで" },
+        { name:"マッサージ", goal:"5分 × 10回" },
+        { name:"トリートメント施術", goal:"モデル5人" },
+        { name:"リタッチ塗布", goal:"12分 × 20回" },
+        { name:"ファッションカラー塗布", goal:"15分 × 10回" },
+        { name:"パーマ剤塗布 & ターバン", goal:"5分 × 10回" },
+        { name:"ヘッドスパ", goal:"自社講習" },
+        { name:"眉カット講習", goal:"メンズカットモデル5人" },
+        { name:"ワインディング", goal:"20分 × 10回" },
+        { name:"ワインディング2", goal:"20分 × 10回" },
+        { name:"フィニッシュワーク", goal:"メンズスタイル 10回" },
+      ],
+      "第2期": [
+        { name:"オールパーパス", goal:"15分 × 10回" },
+        { name:"メンズワインディング 波巻き", goal:"20分 × 10回" },
+        { name:"メンズワインディング ツイスパ", goal:"20分 × 10回" },
+        { name:"メンズワインディング ニュアンス", goal:"20分 × 10回" },
+        { name:"ストレート塗布", goal:"15分 × 15回" },
+        { name:"ストレートアイロン", goal:"40分 × 20回" },
+        { name:"メンズブロー", goal:"15分 × 10回" },
+        { name:"マニキュア塗布", goal:"20分 × 10回" },
+        { name:"カラー講習", goal:"3回コース" },
+      ],
+      "第3期": [
+        { name:"モデル撮影", goal:"撮影コンテスト等" },
+        { name:"ワンレングス", goal:"25分 × 15回" },
+        { name:"ナチュラルマッシュ（メンズ）", goal:"30分 × 15回" },
+        { name:"レイヤーマッシュ（メンズ）", goal:"30分 × 10回" },
+        { name:"ウルフ（マッシュウルフ）", goal:"30分 × 10回" },
+        { name:"センターパート（ネープあり）", goal:"30分 × 10回" },
+        { name:"刈り上げマッシュ（メンズ）", goal:"30分 × 10回" },
+        { name:"レイヤーショート（メンズ）", goal:"30分 × 10回" },
+        { name:"ボックスショート（メンズ）", goal:"30分 × 10回" },
+        { name:"フェードカット", goal:"soeasy参照" },
+        { name:"前髪と量感調整講習", goal:"講習" },
+      ],
+      "第4期": [
+        { name:"コピーカット", goal:"20スタイル" },
+        { name:"デビュー前面談", goal:"1H" },
+        { name:"店長講習（3人）", goal:"2H" },
+        { name:"カウンセリング講習", goal:"2H" },
+        { name:"モデル メンズマッシュ", goal:"15人" },
+        { name:"モデル メンズショート", goal:"15人" },
+        { name:"モデル メンズウルフ", goal:"5人" },
+        { name:"中間テスト", goal:"採点表を提出" },
+        { name:"モデル フェードカット", goal:"7人" },
+        { name:"モデル メンズニュアンスパーマ", goal:"5人" },
+        { name:"モデル メンズスパイラルパーマ", goal:"3人" },
+        { name:"モデル メンズツイストスパイラルパーマ", goal:"5人" },
+        { name:"モデル メンズ波巻きスパイラル", goal:"5人" },
+        { name:"モデル ピンパーマ", goal:"2人" },
+        { name:"モデル スペインカール・シャドウパーマ", goal:"5人" },
+        { name:"モデル メンズ縮毛矯正", goal:"3人" },
+        { name:"最終テスト", goal:"該当ページ参照" },
+      ],
+    },
+  },
+};
+
+let _id = 100;
+const newId = () => "s" + (_id++);
+
+/* ===== GAS（スプレッドシート）接続 ===== */
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyoTybPgv3BVXwBwUBSSi_8IlnIC41L76GQkmk3W_eSsgX8NFxj1ByWChf-yy8fd5yj/exec";
+const STATUS_TO_JA = { pending:"承認待ち", approved:"合格", hold:"保留" };
+const JA_TO_STATUS = { "承認待ち":"pending", "合格":"approved", "保留":"hold" };
+
+async function apiList() {
+  const res = await fetch(GAS_URL + "?action=list", { method:"GET" });
+  const data = await res.json();
+  if (!data.ok) throw new Error("list failed");
+  return data.rows.map((r) => ({
+    id:r.id, dept:r.dept, who:r.who, term:r.term, item:r.item,
+    at:r.at, photo:r.photo || null,
+    status: JA_TO_STATUS[r.status] || "pending", note:r.note || "",
+  }));
+}
+async function apiPost(payload) {
+  const res = await fetch(GAS_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+const INITIAL = [
+  { id:newId(), dept:"regular", who:"梶内 心結", term:"第1期", item:"シャンプー", photo:null, status:"approved", at:"6/11", note:"" },
+  { id:newId(), dept:"regular", who:"大竹 椿咲", term:"第2期", item:"ワインディング", photo:null, status:"pending", at:"6/23", note:"" },
+  { id:newId(), dept:"regular", who:"青木 花歩", term:"第1期", item:"ストレートアイロン", photo:null, status:"hold", at:"6/22", note:"毛先のおさまりもう少し" },
+  { id:newId(), dept:"mens", who:"大塚 敦史", term:"第2期", item:"ストレートアイロン", photo:null, status:"pending", at:"6/23", note:"" },
+];
+
+function App() {
+  const [role, setRole] = useState("assistant");
+  const [dept, setDept] = useState("regular");
+  const [me, setMe] = useState(DEPTS.regular.roster[0]);
+  const [subs, setSubs] = useState(INITIAL);
+  const [zoom, setZoom] = useState(null);
+  const [conn, setConn] = useState("loading");
+
+  const load = useCallback(async () => {
+    try { const rows = await apiList(); setSubs(rows); setConn("online"); }
+    catch (e) { setSubs(INITIAL); setConn("demo"); }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const switchDept = (d) => { setDept(d); setMe(DEPTS[d].roster[0]); };
+
+  const submitSub = useCallback(async ({ dept, who, term, item, photo }) => {
+    const at = new Date().toLocaleDateString("ja-JP", { month:"numeric", day:"numeric" });
+    if (conn !== "online") {
+      setSubs((p) => [...p, { id:newId(), dept, who, term, item, photo, status:"pending", at, note:"" }]);
+      return;
+    }
+    const mime = photo && photo.startsWith("data:") ? photo.substring(5, photo.indexOf(";")) : "image/jpeg";
+    const res = await apiPost({ action:"submit", dept, who, term, item, at, photoBase64:photo, photoMime:mime });
+    if (res && res.ok) {
+      setSubs((p) => [...p, { id:res.id, dept, who, term, item, photo:res.photo || photo, status:"pending", at, note:"" }]);
+    } else { throw new Error("submit failed"); }
+  }, [conn]);
+
+  const updateSub = useCallback(async (id, status, note = "") => {
+    setSubs((p) => p.map((s) => (s.id === id ? { ...s, status, note } : s)));
+    if (conn !== "online") return;
+    try { await apiPost({ action:"update", id, status:STATUS_TO_JA[status], note }); } catch (e) {}
+  }, [conn]);
+
+  return (
+    <div className="root">
+      <header className="topbar">
+        <div className="brand">
+          <span className="brand-mark">GULGUL</span>
+          <span className="brand-sub">ACADEMY</span>
+        </div>
+        <div className="roleswitch" role="tablist" aria-label="役割">
+          <button role="tab" aria-selected={role==="assistant"} className={"role-btn "+(role==="assistant"?"on":"")} onClick={()=>setRole("assistant")}>
+            <User size={14}/> アシスタント
+          </button>
+          <button role="tab" aria-selected={role==="manager"} className={"role-btn "+(role==="manager"?"on":"")} onClick={()=>setRole("manager")}>
+            <ShieldCheck size={14}/> 管理側
+          </button>
+        </div>
+      </header>
+
+      <div className="deptbar">
+        <span className="deptbar-label">事業部</span>
+        {Object.entries(DEPTS).map(([k,v]) => (
+          <button key={k} className={"dept-chip "+(dept===k?"on":"")} onClick={()=>switchDept(k)}>{v.label}</button>
+        ))}
+        <span className={"connbadge "+conn} title="保存先の接続状態">
+          {conn==="online" ? "● 保存中" : conn==="loading" ? "接続中…" : "デモ表示"}
+        </span>
+      </div>
+
+      <main className="stage">
+        {role==="assistant"
+          ? <AssistantView dept={dept} me={me} setMe={setMe} subs={subs} onSubmit={submitSub} onZoom={setZoom}/>
+          : <ManagerView dept={dept} subs={subs} onUpdate={updateSub} onReload={load} onZoom={setZoom}/>}
+      </main>
+
+      {zoom && <Lightbox src={zoom} onClose={()=>setZoom(null)}/>}
+    </div>
+  );
+}
+
+function Lightbox({ src, onClose }) {
+  const [scale, setScale] = useState(1);
+  const isPh = !src || src === "__ph__";
+  return (
+    <div className="lb" onClick={onClose}>
+      <div className="lb-bar" onClick={(e)=>e.stopPropagation()}>
+        <button className="lb-btn" onClick={()=>setScale((s)=>Math.max(1,+(s-0.5).toFixed(1)))} aria-label="縮小"><ZoomOut size={20}/></button>
+        <span className="lb-scale">{Math.round(scale*100)}%</span>
+        <button className="lb-btn" onClick={()=>setScale((s)=>Math.min(4,+(s+0.5).toFixed(1)))} aria-label="拡大"><ZoomIn size={20}/></button>
+        <button className="lb-btn lb-close" onClick={onClose} aria-label="閉じる"><X size={20}/></button>
+      </div>
+      <div className="lb-body" onClick={(e)=>e.stopPropagation()}>
+        {isPh
+          ? <div className="lb-ph">写真サンプル（本番は提出写真が拡大表示されます）</div>
+          : <img src={src} alt="提出写真の拡大" style={{ transform:`scale(${scale})` }}/>}
+      </div>
+    </div>
+  );
+}
+
+function AssistantView({ dept, me, setMe, subs, onSubmit, onZoom }) {
+  const [term, setTerm] = useState(null);
+  const [item, setItem] = useState(null);
+  const [photo, setPhoto] = useState(null);
+  const [flash, setFlash] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef(null);
+
+  const D = DEPTS[dept];
+  const TERMS = Object.keys(D.curriculum);
+  const mine = subs.filter((s)=>s.dept===dept && s.who===me).slice().reverse();
+  const reset = () => { setTerm(null); setItem(null); setPhoto(null); };
+
+  const onFile = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => setPhoto(r.result);
+    r.readAsDataURL(f);
+  };
+
+  const submit = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await onSubmit({ dept, who:me, term, item, photo });
+      setFlash(true); setTimeout(()=>setFlash(false), 1800); reset();
+    } catch (e) {
+      alert("提出に失敗しました。電波の良い場所でもう一度お試しください。");
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="col">
+      <div className="whoami">
+        <span className="whoami-label">提出者</span>
+        <select className="whoami-select" value={me} onChange={(e)=>{ setMe(e.target.value); reset(); }}>
+          {D.roster.map((n)=><option key={n}>{n}</option>)}
+        </select>
+        <span className="whoami-hint">{D.label}・ログインで固定</span>
+      </div>
+
+      {flash && <div className="flash"><Check size={16}/> 提出しました。承認待ちです</div>}
+
+      <section className="card pad">
+        <Stepline term={term} item={item}/>
+        {!term && (
+          <React.Fragment>
+            <h2 className="h2">どの期ですか？</h2>
+            <p className="muted sm">順番通りでなくてOK。今やっている期を選んでください</p>
+            <div className="grid2">
+              {TERMS.map((t)=>(
+                <button key={t} className="pick" onClick={()=>setTerm(t)}>
+                  <span className="pick-big">{t}</span>
+                  <span className="pick-sub">{D.curriculum[t].length} 項目</span>
+                </button>
+              ))}
+            </div>
+          </React.Fragment>
+        )}
+        {term && !item && (
+          <React.Fragment>
+            <button className="back" onClick={()=>setTerm(null)}><ChevronLeft size={16}/> 期を選び直す</button>
+            <h2 className="h2">{term}・どの項目ですか？</h2>
+            <div className="list">
+              {D.curriculum[term].map((it)=>(
+                <button key={it.name} className="row" onClick={()=>setItem(it.name)}>
+                  <span className="row-name">{it.name}</span>
+                  <span className="row-goal"><Clock size={13}/> {it.goal}</span>
+                </button>
+              ))}
+            </div>
+          </React.Fragment>
+        )}
+        {term && item && (
+          <React.Fragment>
+            <button className="back" onClick={()=>setItem(null)}><ChevronLeft size={16}/> 項目を選び直す</button>
+            <h2 className="h2">{item}</h2>
+            <p className="muted sm">{D.label}・{term}</p>
+            {!photo
+              ? <button className="dropzone" onClick={()=>fileRef.current && fileRef.current.click()}>
+                  <Camera size={28}/>
+                  <span className="dz-main">写真をとる / 選ぶ</span>
+                  <span className="dz-sub">練習シートを撮影してください</span>
+                </button>
+              : <div className="preview">
+                  <img src={photo} alt="提出する写真" onClick={()=>onZoom(photo)}/>
+                  <button className="preview-x" onClick={()=>setPhoto(null)} aria-label="写真を消す"><X size={16}/></button>
+                </div>}
+            <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile}/>
+            <button className="submit" disabled={!photo || busy} onClick={submit}>
+              <Upload size={17}/> {busy ? "送信中…" : "提出する"}
+            </button>
+          </React.Fragment>
+        )}
+      </section>
+
+      <section className="card pad">
+        <h3 className="h3">わたしの提出</h3>
+        {mine.length===0 && <p className="muted sm">まだ提出はありません</p>}
+        <div className="mine-list">
+          {mine.map((s)=>(
+            <div key={s.id} className="mine-row">
+              <div className="mine-text">
+                <span className="tag">{s.term}</span>
+                <span className="mine-item">{s.item}</span>
+                {s.status==="hold" && s.note && <span className="mine-note">メモ：{s.note}</span>}
+              </div>
+              <StatusPill status={s.status}/>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Stepline({ term, item }) {
+  const step = item ? 3 : term ? 2 : 1;
+  const labels = ["期","項目","写真"];
+  return (
+    <div className="stepline">
+      {labels.map((l,i)=>(
+        <React.Fragment key={l}>
+          <div className={"step "+(step>=i+1?"done":"")+" "+(step===i+1?"now":"")}>
+            <span className="step-dot">{i+1}</span>
+            <span className="step-label">{l}</span>
+          </div>
+          {i<2 && <span className={"step-bar "+(step>i+1?"done":"")}/>}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+function ManagerView({ dept, subs, onUpdate, onReload, onZoom }) {
+  const [filter, setFilter] = useState("pending");
+  const list = useMemo(()=>{
+    const arr = subs.filter((s)=>s.dept===dept).slice().reverse();
+    if (filter==="all") return arr;
+    return arr.filter((s)=>s.status===filter);
+  }, [subs, dept, filter]);
+
+  const inDept = subs.filter((s)=>s.dept===dept);
+  const pendingCount = inDept.filter((s)=>s.status==="pending").length;
+  const holdCount = inDept.filter((s)=>s.status==="hold").length;
+  const approvedCount = inDept.filter((s)=>s.status==="approved").length;
+
+  const approve = (id)=>onUpdate(id,"approved","");
+  const hold = (id,note)=>onUpdate(id,"hold",note);
+  const undo = (id)=>onUpdate(id,"pending","");
+  const emptyMsg = filter==="hold" ? "保留はありません" : filter==="pending" ? "承認待ちはありません" : "提出はありません";
+
+  return (
+    <div className="col">
+      <section className="summary">
+        <div className="sumcell"><span className="sumnum">{pendingCount}</span><span className="sumlbl">承認待ち</span></div>
+        <div className="sumdiv"/>
+        <div className="sumcell"><span className="sumnum num-hold">{holdCount}</span><span className="sumlbl">保留</span></div>
+        <div className="sumdiv"/>
+        <div className="sumcell"><span className="sumnum num-ok">{approvedCount}</span><span className="sumlbl">合格</span></div>
+      </section>
+      <div className="filter">
+        <button className={"fbtn "+(filter==="pending"?"on":"")} onClick={()=>setFilter("pending")}>承認待ち</button>
+        <button className={"fbtn "+(filter==="hold"?"on":"")} onClick={()=>setFilter("hold")}>保留</button>
+        <button className={"fbtn "+(filter==="all"?"on":"")} onClick={()=>setFilter("all")}>すべて</button>
+        {onReload && <button className="fbtn reload" onClick={onReload} title="最新に更新"><RotateCcw size={14}/></button>}
+      </div>
+      {list.length===0 && <div className="card pad empty"><Check size={22}/><p>{emptyMsg}</p></div>}
+      <div className="mgr-grid">
+        {list.map((s)=>(
+          <SubCard key={s.id} sub={s} onApprove={approve} onHold={hold} onUndo={undo} onZoom={onZoom}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SubCard({ sub:s, onApprove, onHold, onUndo, onZoom }) {
+  const [holdOpen, setHoldOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const confirmHold = () => { onHold(s.id, note.trim()); setHoldOpen(false); setNote(""); };
+  return (
+    <article className={"subcard "+(s.status==="approved"?"stamped":"")+" "+(s.status==="hold"?"isheld":"")}>
+      <button className="subphoto" onClick={()=>onZoom(s.photo || "__ph__")} aria-label="写真を拡大">
+        {s.photo ? <img src={s.photo} alt={s.who+"の提出"}/> : <PhotoPlaceholder/>}
+        <span className="zoomhint"><ZoomIn size={15}/> タップで拡大</span>
+        {s.status==="approved" && <div className="stamp"><span>合<br/>格</span></div>}
+        {s.status==="hold" && <div className="stamp hold"><span>保<br/>留</span></div>}
+      </button>
+      <div className="subbody">
+        <div className="subhead">
+          <span className="subwho">{s.who}</span>
+          <span className="subat">{s.at}</span>
+        </div>
+        <div className="submeta"><span className="tag">{s.term}</span><span className="subitem">{s.item}</span></div>
+        {s.status==="hold" && s.note && <p className="holdnote">メモ：{s.note}</p>}
+        {s.status==="pending" && !holdOpen && (
+          <div className="btnrow">
+            <button className="approve" onClick={()=>onApprove(s.id)}><Check size={16}/> 合格にする</button>
+            <button className="holdbtn" onClick={()=>setHoldOpen(true)}>保留</button>
+          </div>
+        )}
+        {s.status==="pending" && holdOpen && (
+          <div className="holdbox">
+            <textarea className="holdinput" rows={2} value={note} onChange={(e)=>setNote(e.target.value)}
+              placeholder="ひとことメモ（任意）　例：巻き直し / タイムもう少し"/>
+            <div className="btnrow">
+              <button className="holdconfirm" onClick={confirmHold}>保留にする</button>
+              <button className="holdcancel" onClick={()=>{ setHoldOpen(false); setNote(""); }}>やめる</button>
+            </div>
+          </div>
+        )}
+        {(s.status==="approved" || s.status==="hold") && (
+          <button className="undo" onClick={()=>onUndo(s.id)}><RotateCcw size={14}/> 承認待ちに戻す</button>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function PhotoPlaceholder() {
+  return (
+    <div className="ph">
+      <div className="ph-lines"><span/><span/><span/><span/><span/></div>
+      <span className="ph-cap">練習シート</span>
+    </div>
+  );
+}
+
+function StatusPill({ status }) {
+  if (status==="approved") return <span className="pill pill-ok"><Check size={13}/> 合格</span>;
+  if (status==="hold") return <span className="pill pill-hold">保留</span>;
+  return <span className="pill pill-wait">承認待ち</span>;
+}
+
+ReactDOM.createRoot(document.getElementById("app")).render(<App/>);
+</script>
+</body>
+</html>
