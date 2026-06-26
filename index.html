@@ -207,7 +207,19 @@ button:focus-visible{outline:2px solid var(--vermilion); outline-offset:2px;}
 .trash{width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--paper); color:var(--muted); display:grid; place-items:center; cursor:pointer;}
 .trash:hover{border-color:var(--vermilion); color:var(--vermilion);}
 
+
+.lb-foot{padding:14px 16px calc(18px + env(safe-area-inset-bottom)); background:rgba(20,18,16,.96); border-top:1px solid rgba(255,255,255,.12);}
+.lb-foot-msg{margin:0 0 10px; color:#fff; font-size:14px; font-weight:700; text-align:center;}
+.lb-foot-btns{display:flex; gap:10px; max-width:420px; margin:0 auto;}
+.lb-del{flex:1; display:flex; align-items:center; justify-content:center; gap:7px; background:var(--vermilion); color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit;}
+.lb-keep{background:rgba(255,255,255,.14); color:#fff; border:none; border-radius:12px; padding:14px 20px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;}
+
 </style>
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#211E1C" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-title" content="ACADEMY" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 </head>
 <body>
 <div id="app"></div>
@@ -510,9 +522,11 @@ function App() {
         React.createElement("main", { className: "stage" }, role === "assistant"
             ? React.createElement(AssistantView, { dept: dept, me: me, setMe: setMe, subs: subs, onSubmit: submitMany, onRemove: removeSub, onZoom: setZoom })
             : React.createElement(ManagerView, { dept: dept, subs: subs, onUpdate: updateSub, onUpdateMany: updateMany, onReload: load, onZoom: setZoom })),
-        zoom && React.createElement(Lightbox, { src: zoom, onClose: () => setZoom(null) })));
+        zoom && React.createElement(Lightbox, { src: typeof zoom === "string" ? zoom : zoom.src, onConfirmDelete: (typeof zoom === "object" && zoom.deleteId)
+                ? async () => { await removeSub(zoom.deleteId); setZoom(null); }
+                : null, onClose: () => setZoom(null) })));
 }
-function Lightbox({ src, onClose }) {
+function Lightbox({ src, onClose, onConfirmDelete }) {
     const [scale, setScale] = useState(1);
     const isPh = !src || src === "__ph__";
     return (React.createElement("div", { className: "lb", onClick: onClose },
@@ -528,7 +542,14 @@ function Lightbox({ src, onClose }) {
                 React.createElement(X, { size: 20 }))),
         React.createElement("div", { className: "lb-body", onClick: (e) => e.stopPropagation() }, isPh
             ? React.createElement("div", { className: "lb-ph" }, "\u5199\u771F\u30B5\u30F3\u30D7\u30EB\uFF08\u672C\u756A\u306F\u63D0\u51FA\u5199\u771F\u304C\u62E1\u5927\u8868\u793A\u3055\u308C\u307E\u3059\uFF09")
-            : React.createElement("img", { src: src, alt: "\u63D0\u51FA\u5199\u771F\u306E\u62E1\u5927", style: { transform: `scale(${scale})` } }))));
+            : React.createElement("img", { src: src, alt: "\u63D0\u51FA\u5199\u771F\u306E\u62E1\u5927", style: { transform: `scale(${scale})` } })),
+        onConfirmDelete && (React.createElement("div", { className: "lb-foot", onClick: (e) => e.stopPropagation() },
+            React.createElement("p", { className: "lb-foot-msg" }, "\u3053\u306E\u5199\u771F\u3092\u53D6\u308A\u4E0B\u3052\u307E\u3059\u304B\uFF1F"),
+            React.createElement("div", { className: "lb-foot-btns" },
+                React.createElement("button", { className: "lb-del", onClick: onConfirmDelete },
+                    React.createElement(Trash, { size: 16 }),
+                    " \u3053\u306E\u5199\u771F\u3092\u53D6\u308A\u4E0B\u3052\u308B"),
+                React.createElement("button", { className: "lb-keep", onClick: onClose }, "\u3084\u3081\u308B"))))));
 }
 function AssistantView({ dept, me, setMe, subs, onSubmit, onRemove, onZoom }) {
     const [term, setTerm] = useState(null);
@@ -646,8 +667,7 @@ function AssistantView({ dept, me, setMe, subs, onSubmit, onRemove, onZoom }) {
                         s.note)),
                 React.createElement("div", { className: "mine-right" },
                     React.createElement(StatusPill, { status: s.status }),
-                    s.status === "pending" && (React.createElement("button", { className: "trash", "aria-label": "\u53D6\u308A\u4E0B\u3052\u308B", onClick: () => { if (window.confirm("この提出を取り下げますか？（写真も削除されます）"))
-                            onRemove(s.id); } },
+                    s.status === "pending" && (React.createElement("button", { className: "trash", "aria-label": "\u53D6\u308A\u4E0B\u3052\u308B", onClick: () => onZoom({ src: s.photo || "__ph__", deleteId: s.id }) },
                         React.createElement(Trash, { size: 15 })))))))))));
 }
 function Stepline({ term, item }) {
@@ -788,6 +808,13 @@ function StatusPill({ status }) {
 }
 ReactDOM.createRoot(document.getElementById("app")).render(React.createElement(App, null));
 
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
 </script>
 </body>
 </html>
