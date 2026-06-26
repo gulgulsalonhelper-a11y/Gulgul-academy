@@ -214,6 +214,24 @@ button:focus-visible{outline:2px solid var(--vermilion); outline-offset:2px;}
 .lb-del{flex:1; display:flex; align-items:center; justify-content:center; gap:7px; background:var(--vermilion); color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit;}
 .lb-keep{background:rgba(255,255,255,.14); color:#fff; border:none; border-radius:12px; padding:14px 20px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;}
 
+
+/* ログイン・認証画面 */
+.center{text-align:center; color:var(--muted);}
+.authcard{max-width:420px; margin:24px auto 0;}
+.fld{display:block; margin-top:14px;}
+.fld-l{display:block; font-size:12px; font-weight:800; color:var(--muted); margin-bottom:6px; letter-spacing:.04em;}
+.fld-i{width:100%; border:1.5px solid var(--line); border-radius:11px; padding:13px 14px; font-size:16px; font-family:inherit; color:var(--ink); background:var(--line2);}
+.fld-i:focus{outline:none; border-color:var(--ink); background:var(--paper);}
+.autherr{margin:12px 0 0; font-size:13px; font-weight:700; color:var(--vermilion);}
+.authcard .submit{margin-top:18px;}
+/* ユーザー表示・ログアウト */
+.userbox{display:flex; align-items:center; gap:10px;}
+.username{font-size:13px; font-weight:800;}
+.logout{background:var(--line2); border:1px solid var(--line); border-radius:9px; padding:7px 12px; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; font-family:inherit;}
+.logout:hover{color:var(--ink); border-color:var(--ink);}
+.dept-fixed{font-size:15px; font-weight:800;}
+.whoami-fixed{font-size:15px; font-weight:800; color:var(--ink); border-bottom:2px solid var(--ink); padding:2px 2px;}
+
 </style>
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#211E1C" />
@@ -427,13 +445,22 @@ const INITIAL = [
     { id: newId(), dept: "regular", who: "青木 花歩", term: "第1期", item: "リタッチ塗布", photo: null, status: "hold", at: "6/22", note: "塗布量もう少し" },
     { id: newId(), dept: "mens", who: "大塚 敦史", term: "第2期", item: "ストレートアイロン", photo: null, status: "pending", at: "6/23", note: "" },
 ];
+function loadAuth() { try {
+    return JSON.parse(localStorage.getItem("gulgul_auth") || "null");
+}
+catch (e) {
+    return null;
+} }
+function saveAuth(u) { try {
+    u ? localStorage.setItem("gulgul_auth", JSON.stringify(u)) : localStorage.removeItem("gulgul_auth");
+}
+catch (e) { } }
 function App() {
-    const [role, setRole] = useState("assistant");
-    const [dept, setDept] = useState("regular");
-    const [me, setMe] = useState(DEPTS.regular.roster[0]);
+    const [dept, setDept] = useState("regular"); // 管理者は事業部を切替可
     const [subs, setSubs] = useState(INITIAL);
     const [zoom, setZoom] = useState(null);
     const [conn, setConn] = useState("loading");
+    const [auth, setAuth] = useState(loadAuth()); // ログイン中ユーザー（本番）
     const load = useCallback(async () => {
         try {
             const rows = await apiList();
@@ -446,8 +473,11 @@ function App() {
         }
     }, []);
     useEffect(() => { load(); }, [load]);
-    const switchDept = (d) => { setDept(d); setMe(DEPTS[d].roster[0]); };
-    // 提出（複数枚 → 1枚ずつ行として保存。まとめても1枚ずつでもOK）
+    // ログイン中なら、その人の事業部を初期表示に
+    useEffect(() => { if (auth)
+        setDept(auth.dept); }, [auth]);
+    const onLoggedIn = (u) => { setAuth(u); saveAuth(u); };
+    const logout = () => { setAuth(null); saveAuth(null); };
     const submitMany = useCallback(async ({ dept, who, term, item, photos }) => {
         const at = new Date().toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
         if (conn !== "online") {
@@ -467,7 +497,6 @@ function App() {
         setSubs((prev) => [...prev, ...added]);
         return added.length;
     }, [conn]);
-    // 1件だけ状態更新
     const updateSub = useCallback(async (id, status, note = "") => {
         setSubs((p) => p.map((s) => (s.id === id ? { ...s, status, note } : s)));
         if (conn !== "online")
@@ -477,7 +506,6 @@ function App() {
         }
         catch (e) { }
     }, [conn]);
-    // まとめて状態更新
     const updateMany = useCallback(async (ids, status, note = "") => {
         const set = {};
         ids.forEach((x) => (set[x] = true));
@@ -489,7 +517,6 @@ function App() {
         }
         catch (e) { }
     }, [conn]);
-    // 取り下げ（承認待ちのみ）
     const removeSub = useCallback(async (id) => {
         const target = subs.find((s) => s.id === id);
         if (!target || target.status !== "pending")
@@ -503,28 +530,141 @@ function App() {
         }
         setSubs((p) => p.filter((s) => s.id !== id));
     }, [conn, subs]);
+    // 接続確認中
+    if (conn === "loading") {
+        return (React.createElement("div", { className: "root" },
+            React.createElement(Brandbar, null),
+            React.createElement("div", { className: "stage" },
+                React.createElement("div", { className: "card pad center" }, "\u63A5\u7D9A\u4E2D\u2026"))));
+    }
+    // 本番（online）はログイン必須。demo（プレビュー）はそのまま表示
+    if (conn === "online" && !auth) {
+        return (React.createElement("div", { className: "root" },
+            React.createElement(Brandbar, null),
+            React.createElement(LoginView, { onLoggedIn: onLoggedIn })));
+    }
+    if (conn === "online" && auth && auth.mustChange) {
+        return (React.createElement("div", { className: "root" },
+            React.createElement(Brandbar, null),
+            React.createElement(ChangePasswordView, { auth: auth, onDone: (u) => onLoggedIn(u) })));
+    }
+    // 役割・事業部・氏名を決定（demoは仮ユーザー）
+    const role = auth ? auth.role : "assistant";
+    const me = auth ? auth.name : DEPTS[dept].roster[0];
+    const canSwitchDept = !auth || auth.role === "manager"; // 管理者は両事業部を見られる
     return (React.createElement("div", { className: "root" },
-        React.createElement("header", { className: "topbar" },
-            React.createElement("div", { className: "brand" },
-                React.createElement("span", { className: "brand-mark" }, "GULGUL"),
-                React.createElement("span", { className: "brand-sub" }, "ACADEMY")),
-            React.createElement("div", { className: "roleswitch", role: "tablist", "aria-label": "\u5F79\u5272" },
-                React.createElement("button", { role: "tab", "aria-selected": role === "assistant", className: "role-btn " + (role === "assistant" ? "on" : ""), onClick: () => setRole("assistant") },
-                    React.createElement(User, { size: 14 }),
-                    " \u30A2\u30B7\u30B9\u30BF\u30F3\u30C8"),
-                React.createElement("button", { role: "tab", "aria-selected": role === "manager", className: "role-btn " + (role === "manager" ? "on" : ""), onClick: () => setRole("manager") },
-                    React.createElement(ShieldCheck, { size: 14 }),
-                    " \u7BA1\u7406\u5074"))),
+        React.createElement(Brandbar, { auth: auth, onLogout: logout }),
         React.createElement("div", { className: "deptbar" },
             React.createElement("span", { className: "deptbar-label" }, "\u4E8B\u696D\u90E8"),
-            Object.entries(DEPTS).map(([k, v]) => (React.createElement("button", { key: k, className: "dept-chip " + (dept === k ? "on" : ""), onClick: () => switchDept(k) }, v.label))),
-            React.createElement("span", { className: "connbadge " + conn, title: "\u4FDD\u5B58\u5148\u306E\u63A5\u7D9A\u72B6\u614B" }, conn === "online" ? "● 保存中" : conn === "loading" ? "接続中…" : "デモ表示")),
+            canSwitchDept
+                ? Object.entries(DEPTS).map(([k, v]) => (React.createElement("button", { key: k, className: "dept-chip " + (dept === k ? "on" : ""), onClick: () => setDept(k) }, v.label)))
+                : React.createElement("span", { className: "dept-fixed" }, DEPTS[dept].label),
+            React.createElement("span", { className: "connbadge " + conn, title: "\u4FDD\u5B58\u5148\u306E\u63A5\u7D9A\u72B6\u614B" }, conn === "online" ? "● 保存中" : "デモ表示")),
         React.createElement("main", { className: "stage" }, role === "assistant"
-            ? React.createElement(AssistantView, { dept: dept, me: me, setMe: setMe, subs: subs, onSubmit: submitMany, onRemove: removeSub, onZoom: setZoom })
+            ? React.createElement(AssistantView, { dept: dept, me: me, fixedName: !!auth, subs: subs, onSubmit: submitMany, onRemove: removeSub, onZoom: setZoom })
             : React.createElement(ManagerView, { dept: dept, subs: subs, onUpdate: updateSub, onUpdateMany: updateMany, onReload: load, onZoom: setZoom })),
         zoom && React.createElement(Lightbox, { src: typeof zoom === "string" ? zoom : zoom.src, onConfirmDelete: (typeof zoom === "object" && zoom.deleteId)
                 ? async () => { await removeSub(zoom.deleteId); setZoom(null); }
                 : null, onClose: () => setZoom(null) })));
+}
+function Brandbar({ auth, onLogout }) {
+    return (React.createElement("header", { className: "topbar" },
+        React.createElement("div", { className: "brand" },
+            React.createElement("span", { className: "brand-mark" }, "GULGUL"),
+            React.createElement("span", { className: "brand-sub" }, "ACADEMY")),
+        auth && (React.createElement("div", { className: "userbox" },
+            React.createElement("span", { className: "username" }, auth.name),
+            React.createElement("button", { className: "logout", onClick: onLogout }, "\u30ED\u30B0\u30A2\u30A6\u30C8")))));
+}
+function LoginView({ onLoggedIn }) {
+    const [id, setId] = useState("");
+    const [pw, setPw] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState("");
+    const submit = async () => {
+        if (!id || !pw || busy)
+            return;
+        setBusy(true);
+        setErr("");
+        try {
+            const res = await apiPost({ action: "login", id: id.trim(), password: pw });
+            if (res && res.ok) {
+                const user = { id: res.id, name: res.name, dept: res.dept, role: res.role, mustChange: !!res.firstTime, _temp: pw };
+                onLoggedIn(user);
+            }
+            else if (res && res.error === "disabled") {
+                setErr("このアカウントは現在使えません。管理者にお問い合わせください。");
+            }
+            else {
+                setErr("IDまたはパスワードが違います。");
+            }
+        }
+        catch (e) {
+            setErr("通信に失敗しました。電波の良い場所でお試しください。");
+        }
+        finally {
+            setBusy(false);
+        }
+    };
+    return (React.createElement("div", { className: "stage" },
+        React.createElement("section", { className: "card pad authcard" },
+            React.createElement("h2", { className: "h2" }, "\u30ED\u30B0\u30A4\u30F3"),
+            React.createElement("p", { className: "muted sm" }, "\u914D\u3089\u308C\u305FID\u3068\u4EEE\u30D1\u30B9\u30EF\u30FC\u30C9\u3092\u5165\u308C\u3066\u304F\u3060\u3055\u3044"),
+            React.createElement("label", { className: "fld" },
+                React.createElement("span", { className: "fld-l" }, "ID"),
+                React.createElement("input", { className: "fld-i", value: id, onChange: (e) => setId(e.target.value), autoCapitalize: "none", autoCorrect: "off", placeholder: "\u4F8B\uFF1A\u68B6\u5185\u5FC3\u7D50" })),
+            React.createElement("label", { className: "fld" },
+                React.createElement("span", { className: "fld-l" }, "\u30D1\u30B9\u30EF\u30FC\u30C9"),
+                React.createElement("input", { className: "fld-i", type: "password", value: pw, onChange: (e) => setPw(e.target.value), placeholder: "\u30D1\u30B9\u30EF\u30FC\u30C9" })),
+            err && React.createElement("p", { className: "autherr" }, err),
+            React.createElement("button", { className: "submit", disabled: !id || !pw || busy, onClick: submit }, busy ? "確認中…" : "ログイン"))));
+}
+function ChangePasswordView({ auth, onDone }) {
+    const [p1, setP1] = useState("");
+    const [p2, setP2] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState("");
+    const submit = async () => {
+        if (busy)
+            return;
+        if (p1.length < 4) {
+            setErr("パスワードは4文字以上にしてください。");
+            return;
+        }
+        if (p1 !== p2) {
+            setErr("確認用と一致しません。");
+            return;
+        }
+        setBusy(true);
+        setErr("");
+        try {
+            const res = await apiPost({ action: "changePassword", id: auth.id, oldPassword: auth._temp, newPassword: p1 });
+            if (res && res.ok) {
+                onDone({ id: auth.id, name: auth.name, dept: auth.dept, role: auth.role, mustChange: false });
+            }
+            else {
+                setErr("変更できませんでした。もう一度ログインからお試しください。");
+            }
+        }
+        catch (e) {
+            setErr("通信に失敗しました。");
+        }
+        finally {
+            setBusy(false);
+        }
+    };
+    return (React.createElement("div", { className: "stage" },
+        React.createElement("section", { className: "card pad authcard" },
+            React.createElement("h2", { className: "h2" }, "\u30D1\u30B9\u30EF\u30FC\u30C9\u306E\u8A2D\u5B9A"),
+            React.createElement("p", { className: "muted sm" }, "\u521D\u56DE\u30ED\u30B0\u30A4\u30F3\u3067\u3059\u3002\u81EA\u5206\u3060\u3051\u306E\u30D1\u30B9\u30EF\u30FC\u30C9\u3092\u6C7A\u3081\u3066\u304F\u3060\u3055\u3044"),
+            React.createElement("label", { className: "fld" },
+                React.createElement("span", { className: "fld-l" }, "\u65B0\u3057\u3044\u30D1\u30B9\u30EF\u30FC\u30C9"),
+                React.createElement("input", { className: "fld-i", type: "password", value: p1, onChange: (e) => setP1(e.target.value), placeholder: "4\u6587\u5B57\u4EE5\u4E0A" })),
+            React.createElement("label", { className: "fld" },
+                React.createElement("span", { className: "fld-l" }, "\u78BA\u8A8D\u306E\u305F\u3081\u3082\u3046\u4E00\u5EA6"),
+                React.createElement("input", { className: "fld-i", type: "password", value: p2, onChange: (e) => setP2(e.target.value), placeholder: "\u540C\u3058\u3082\u306E\u3092\u5165\u529B" })),
+            err && React.createElement("p", { className: "autherr" }, err),
+            React.createElement("button", { className: "submit", disabled: busy, onClick: submit }, busy ? "保存中…" : "決定して始める"))));
 }
 function Lightbox({ src, onClose, onConfirmDelete }) {
     const [scale, setScale] = useState(1);
@@ -551,7 +691,7 @@ function Lightbox({ src, onClose, onConfirmDelete }) {
                     " \u3053\u306E\u5199\u771F\u3092\u53D6\u308A\u4E0B\u3052\u308B"),
                 React.createElement("button", { className: "lb-keep", onClick: onClose }, "\u3084\u3081\u308B"))))));
 }
-function AssistantView({ dept, me, setMe, subs, onSubmit, onRemove, onZoom }) {
+function AssistantView({ dept, me, setMe, fixedName, subs, onSubmit, onRemove, onZoom }) {
     const [term, setTerm] = useState(null);
     const [item, setItem] = useState(null);
     const [photos, setPhotos] = useState([]);
@@ -594,10 +734,10 @@ function AssistantView({ dept, me, setMe, subs, onSubmit, onRemove, onZoom }) {
     return (React.createElement("div", { className: "col" },
         React.createElement("div", { className: "whoami" },
             React.createElement("span", { className: "whoami-label" }, "\u63D0\u51FA\u8005"),
-            React.createElement("select", { className: "whoami-select", value: me, onChange: (e) => { setMe(e.target.value); reset(); } }, D.roster.map((n) => React.createElement("option", { key: n }, n))),
-            React.createElement("span", { className: "whoami-hint" },
-                D.label,
-                "\u30FB\u30ED\u30B0\u30A4\u30F3\u3067\u56FA\u5B9A")),
+            fixedName
+                ? React.createElement("span", { className: "whoami-fixed" }, me)
+                : React.createElement("select", { className: "whoami-select", value: me, onChange: (e) => { setMe && setMe(e.target.value); reset(); } }, D.roster.map((n) => React.createElement("option", { key: n }, n))),
+            React.createElement("span", { className: "whoami-hint" }, D.label)),
         flash && React.createElement("div", { className: "flash" },
             React.createElement(Check, { size: 16 }),
             " ",
