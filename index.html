@@ -551,7 +551,7 @@ function AssistantView({ dept, me, setMe, subs, onSubmit, onZoom }) {
                         React.createElement("img", { src: photo, alt: "\u63D0\u51FA\u3059\u308B\u5199\u771F", onClick: () => onZoom(photo) }),
                         React.createElement("button", { className: "preview-x", onClick: () => setPhoto(null), "aria-label": "\u5199\u771F\u3092\u6D88\u3059" },
                             React.createElement(X, { size: 16 }))),
-                React.createElement("input", { ref: fileRef, type: "file", accept: "image/*", capture: "environment", hidden: true, onChange: onFile }),
+                React.createElement("input", { ref: fileRef, type: "file", accept: "image/*", hidden: true, onChange: onFile }),
                 React.createElement("button", { className: "submit", disabled: !photo || busy, onClick: submit },
                     React.createElement(Upload, { size: 17 }),
                     " ",
