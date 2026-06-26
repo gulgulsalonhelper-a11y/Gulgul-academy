@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <title>GULGUL ACADEMY</title>
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <style>
 :root{
   --bg:#E7E4DD; --paper:#FFFFFF; --ink:#211E1C; --muted:#7C746B;
@@ -185,524 +184,504 @@ button:focus-visible{outline:2px solid var(--vermilion); outline-offset:2px;}
 <body>
 <div id="app"></div>
 
-<script type="text/babel" data-presets="react">
+<script>
+/* 予備：cdnjs が読めなかった場合は unpkg から読み込む */
+if (typeof React === "undefined" || typeof ReactDOM === "undefined") {
+  document.write('<scr'+'ipt src="https://unpkg.com/react@18/umd/react.production.min.js"><\/scr'+'ipt>');
+  document.write('<scr'+'ipt src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\/scr'+'ipt>');
+}
+/* 何かエラーが出たら真っ白にせずメッセージを出す */
+window.addEventListener("error", function (e) {
+  var el = document.getElementById("app");
+  if (el && !el.firstChild) {
+    el.innerHTML = '<div style="padding:24px;font-family:sans-serif;color:#211E1C;line-height:1.7">'
+      + '読み込みに失敗しました。通信環境の良い場所で再読み込みしてください。<br>'
+      + '<small style="color:#7C746B">' + (e.message || "") + '</small></div>';
+  }
+});
+</script>
+<script>
+"use strict";
 const { useState, useRef, useMemo, useEffect, useCallback } = React;
-
 /* ===== アイコン（lucideスタイルの簡易SVG） ===== */
 const ICONS = {
-  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
-  check:'<polyline points="20 6 9 17 4 12"/>',
-  chevronLeft:'<polyline points="15 18 9 12 15 6"/>',
-  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
-  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
-  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
-  rotate:'<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
-  user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
-  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>',
-  zoomIn:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>',
-  zoomOut:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>',
+    camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    chevronLeft: '<polyline points="15 18 9 12 15 6"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+    x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    rotate: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+    user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>',
+    zoomIn: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>',
+    zoomOut: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>',
 };
 function Icon({ n, size = 18 }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    dangerouslySetInnerHTML={{ __html: ICONS[n] }} />;
+    return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", dangerouslySetInnerHTML: { __html: ICONS[n] } });
 }
-const Camera=(p)=><Icon n="camera" {...p}/>;
-const Check=(p)=><Icon n="check" {...p}/>;
-const ChevronLeft=(p)=><Icon n="chevronLeft" {...p}/>;
-const Clock=(p)=><Icon n="clock" {...p}/>;
-const Upload=(p)=><Icon n="upload" {...p}/>;
-const X=(p)=><Icon n="x" {...p}/>;
-const RotateCcw=(p)=><Icon n="rotate" {...p}/>;
-const User=(p)=><Icon n="user" {...p}/>;
-const ShieldCheck=(p)=><Icon n="shield" {...p}/>;
-const ZoomIn=(p)=><Icon n="zoomIn" {...p}/>;
-const ZoomOut=(p)=><Icon n="zoomOut" {...p}/>;
-
+const Camera = (p) => React.createElement(Icon, { n: "camera", ...p });
+const Check = (p) => React.createElement(Icon, { n: "check", ...p });
+const ChevronLeft = (p) => React.createElement(Icon, { n: "chevronLeft", ...p });
+const Clock = (p) => React.createElement(Icon, { n: "clock", ...p });
+const Upload = (p) => React.createElement(Icon, { n: "upload", ...p });
+const X = (p) => React.createElement(Icon, { n: "x", ...p });
+const RotateCcw = (p) => React.createElement(Icon, { n: "rotate", ...p });
+const User = (p) => React.createElement(Icon, { n: "user", ...p });
+const ShieldCheck = (p) => React.createElement(Icon, { n: "shield", ...p });
+const ZoomIn = (p) => React.createElement(Icon, { n: "zoomIn", ...p });
+const ZoomOut = (p) => React.createElement(Icon, { n: "zoomOut", ...p });
 /* ===== カリキュラム・名簿 ===== */
 const DEPTS = {
-  regular: {
-    label: "レギュラー",
-    roster: ["大竹 椿咲","河井 心音","村岡 愛莉","渡邉 柚月","青木 花歩","荒 日南多","大塚 杏","大山 華鈴","岡田 彩里","河村 恋羽","梶内 心結","木村 結","行田 歩直","鈴木 里桜","鈴木 凛","佃 澪那","遠山 蒼衣","西牟田 紗季","渡瀬 明日花"],
-    curriculum: {
-      "第1期": [
-        { name:"シャンプー", goal:"10分以内・ドライまで" },
-        { name:"マッサージ", goal:"5分 × 10回" },
-        { name:"トリートメント施術", goal:"モデル5人" },
-        { name:"リタッチ塗布", goal:"12分 × 20回" },
-        { name:"ファッションカラー塗布", goal:"15分 × 10回" },
-        { name:"パーマ剤塗布 & ターバン", goal:"5分 × 10回" },
-        { name:"ストレート塗布", goal:"15分 × 15回" },
-        { name:"ストレートアイロン", goal:"40分 × 10回" },
-        { name:"ヘッドスパ", goal:"自社講習" },
-      ],
-      "第2期": [
-        { name:"ワンレングスブロー", goal:"25分 × 10回" },
-        { name:"ショートブロー", goal:"15分 × 10回" },
-        { name:"マニキュア塗布", goal:"15分 × 10回" },
-        { name:"ワインディング", goal:"20分 × 10回" },
-        { name:"ワインディング2", goal:"20分 × 10回" },
-        { name:"フィニッシュワーク", goal:"計10回" },
-      ],
-      "第3期": [
-        { name:"モデル撮影", goal:"撮影コンテスト等" },
-        { name:"ワンレングス", goal:"25分 × 15回" },
-        { name:"グラデーションボブ", goal:"25分 × 15回" },
-        { name:"ミディアムレイヤー", goal:"25分 × 15回" },
-        { name:"ショート", goal:"25分 × 15回" },
-        { name:"マッシュベーシック", goal:"20分 × 10回" },
-        { name:"ステップレイヤー（刈り上げ）", goal:"25分 × 10回" },
-        { name:"カラー講習", goal:"3回コース" },
-        { name:"前髪と量感調整講習", goal:"講習" },
-        { name:"眉カット講習", goal:"OJTシート提出" },
-      ],
-      "第4期": [
-        { name:"コピーカット", goal:"20スタイル" },
-        { name:"デビュー前面談", goal:"1H" },
-        { name:"店長講習（5人以上）", goal:"2H" },
-        { name:"カウンセリング講習", goal:"2H" },
-        { name:"モデル ショート（あご上）", goal:"13人" },
-        { name:"モデル ボブ（肩上）", goal:"13人" },
-        { name:"モデル ミディアム（鎖骨上）", goal:"11人" },
-        { name:"モデル ロング（鎖骨下）", goal:"7人" },
-        { name:"中間テスト", goal:"採点表を提出" },
-        { name:"モデル メンズ", goal:"13人" },
-        { name:"モデル メンズセンターパート", goal:"13人" },
-        { name:"モデル メンズパーマ", goal:"5人" },
-        { name:"モデル レディースパーマ", goal:"5人" },
-        { name:"モデル 縮毛矯正", goal:"3人" },
-        { name:"最終テスト", goal:"該当ページ参照" },
-      ],
+    regular: {
+        label: "レギュラー",
+        roster: ["大竹 椿咲", "河井 心音", "村岡 愛莉", "渡邉 柚月", "青木 花歩", "荒 日南多", "大塚 杏", "大山 華鈴", "岡田 彩里", "河村 恋羽", "梶内 心結", "木村 結", "行田 歩直", "鈴木 里桜", "鈴木 凛", "佃 澪那", "遠山 蒼衣", "西牟田 紗季", "渡瀬 明日花"],
+        curriculum: {
+            "第1期": [
+                { name: "シャンプー", goal: "10分以内・ドライまで" },
+                { name: "マッサージ", goal: "5分 × 10回" },
+                { name: "トリートメント施術", goal: "モデル5人" },
+                { name: "リタッチ塗布", goal: "12分 × 20回" },
+                { name: "ファッションカラー塗布", goal: "15分 × 10回" },
+                { name: "パーマ剤塗布 & ターバン", goal: "5分 × 10回" },
+                { name: "ストレート塗布", goal: "15分 × 15回" },
+                { name: "ストレートアイロン", goal: "40分 × 10回" },
+                { name: "ヘッドスパ", goal: "自社講習" },
+            ],
+            "第2期": [
+                { name: "ワンレングスブロー", goal: "25分 × 10回" },
+                { name: "ショートブロー", goal: "15分 × 10回" },
+                { name: "マニキュア塗布", goal: "15分 × 10回" },
+                { name: "ワインディング", goal: "20分 × 10回" },
+                { name: "ワインディング2", goal: "20分 × 10回" },
+                { name: "フィニッシュワーク", goal: "計10回" },
+            ],
+            "第3期": [
+                { name: "モデル撮影", goal: "撮影コンテスト等" },
+                { name: "ワンレングス", goal: "25分 × 15回" },
+                { name: "グラデーションボブ", goal: "25分 × 15回" },
+                { name: "ミディアムレイヤー", goal: "25分 × 15回" },
+                { name: "ショート", goal: "25分 × 15回" },
+                { name: "マッシュベーシック", goal: "20分 × 10回" },
+                { name: "ステップレイヤー（刈り上げ）", goal: "25分 × 10回" },
+                { name: "カラー講習", goal: "3回コース" },
+                { name: "前髪と量感調整講習", goal: "講習" },
+                { name: "眉カット講習", goal: "OJTシート提出" },
+            ],
+            "第4期": [
+                { name: "コピーカット", goal: "20スタイル" },
+                { name: "デビュー前面談", goal: "1H" },
+                { name: "店長講習（5人以上）", goal: "2H" },
+                { name: "カウンセリング講習", goal: "2H" },
+                { name: "モデル ショート（あご上）", goal: "13人" },
+                { name: "モデル ボブ（肩上）", goal: "13人" },
+                { name: "モデル ミディアム（鎖骨上）", goal: "11人" },
+                { name: "モデル ロング（鎖骨下）", goal: "7人" },
+                { name: "中間テスト", goal: "採点表を提出" },
+                { name: "モデル メンズ", goal: "13人" },
+                { name: "モデル メンズセンターパート", goal: "13人" },
+                { name: "モデル メンズパーマ", goal: "5人" },
+                { name: "モデル レディースパーマ", goal: "5人" },
+                { name: "モデル 縮毛矯正", goal: "3人" },
+                { name: "最終テスト", goal: "該当ページ参照" },
+            ],
+        },
     },
-  },
-  mens: {
-    label: "メンズ",
-    roster: ["白井 葵","山﨑 娃果","土屋 舞夏","川口 葵","清水 舞鈴","矢野 みゆう","戸田 真唯","近藤 希","大塚 敦史"],
-    curriculum: {
-      "第1期": [
-        { name:"シャンプー", goal:"10分以内・ドライまで" },
-        { name:"マッサージ", goal:"5分 × 10回" },
-        { name:"トリートメント施術", goal:"モデル5人" },
-        { name:"リタッチ塗布", goal:"12分 × 20回" },
-        { name:"ファッションカラー塗布", goal:"15分 × 10回" },
-        { name:"パーマ剤塗布 & ターバン", goal:"5分 × 10回" },
-        { name:"ヘッドスパ", goal:"自社講習" },
-        { name:"眉カット講習", goal:"メンズカットモデル5人" },
-        { name:"ワインディング", goal:"20分 × 10回" },
-        { name:"ワインディング2", goal:"20分 × 10回" },
-        { name:"フィニッシュワーク", goal:"メンズスタイル 10回" },
-      ],
-      "第2期": [
-        { name:"オールパーパス", goal:"15分 × 10回" },
-        { name:"メンズワインディング 波巻き", goal:"20分 × 10回" },
-        { name:"メンズワインディング ツイスパ", goal:"20分 × 10回" },
-        { name:"メンズワインディング ニュアンス", goal:"20分 × 10回" },
-        { name:"ストレート塗布", goal:"15分 × 15回" },
-        { name:"ストレートアイロン", goal:"40分 × 20回" },
-        { name:"メンズブロー", goal:"15分 × 10回" },
-        { name:"マニキュア塗布", goal:"20分 × 10回" },
-        { name:"カラー講習", goal:"3回コース" },
-      ],
-      "第3期": [
-        { name:"モデル撮影", goal:"撮影コンテスト等" },
-        { name:"ワンレングス", goal:"25分 × 15回" },
-        { name:"ナチュラルマッシュ（メンズ）", goal:"30分 × 15回" },
-        { name:"レイヤーマッシュ（メンズ）", goal:"30分 × 10回" },
-        { name:"ウルフ（マッシュウルフ）", goal:"30分 × 10回" },
-        { name:"センターパート（ネープあり）", goal:"30分 × 10回" },
-        { name:"刈り上げマッシュ（メンズ）", goal:"30分 × 10回" },
-        { name:"レイヤーショート（メンズ）", goal:"30分 × 10回" },
-        { name:"ボックスショート（メンズ）", goal:"30分 × 10回" },
-        { name:"フェードカット", goal:"soeasy参照" },
-        { name:"前髪と量感調整講習", goal:"講習" },
-      ],
-      "第4期": [
-        { name:"コピーカット", goal:"20スタイル" },
-        { name:"デビュー前面談", goal:"1H" },
-        { name:"店長講習（3人）", goal:"2H" },
-        { name:"カウンセリング講習", goal:"2H" },
-        { name:"モデル メンズマッシュ", goal:"15人" },
-        { name:"モデル メンズショート", goal:"15人" },
-        { name:"モデル メンズウルフ", goal:"5人" },
-        { name:"中間テスト", goal:"採点表を提出" },
-        { name:"モデル フェードカット", goal:"7人" },
-        { name:"モデル メンズニュアンスパーマ", goal:"5人" },
-        { name:"モデル メンズスパイラルパーマ", goal:"3人" },
-        { name:"モデル メンズツイストスパイラルパーマ", goal:"5人" },
-        { name:"モデル メンズ波巻きスパイラル", goal:"5人" },
-        { name:"モデル ピンパーマ", goal:"2人" },
-        { name:"モデル スペインカール・シャドウパーマ", goal:"5人" },
-        { name:"モデル メンズ縮毛矯正", goal:"3人" },
-        { name:"最終テスト", goal:"該当ページ参照" },
-      ],
+    mens: {
+        label: "メンズ",
+        roster: ["白井 葵", "山﨑 娃果", "土屋 舞夏", "川口 葵", "清水 舞鈴", "矢野 みゆう", "戸田 真唯", "近藤 希", "大塚 敦史"],
+        curriculum: {
+            "第1期": [
+                { name: "シャンプー", goal: "10分以内・ドライまで" },
+                { name: "マッサージ", goal: "5分 × 10回" },
+                { name: "トリートメント施術", goal: "モデル5人" },
+                { name: "リタッチ塗布", goal: "12分 × 20回" },
+                { name: "ファッションカラー塗布", goal: "15分 × 10回" },
+                { name: "パーマ剤塗布 & ターバン", goal: "5分 × 10回" },
+                { name: "ヘッドスパ", goal: "自社講習" },
+                { name: "眉カット講習", goal: "メンズカットモデル5人" },
+                { name: "ワインディング", goal: "20分 × 10回" },
+                { name: "ワインディング2", goal: "20分 × 10回" },
+                { name: "フィニッシュワーク", goal: "メンズスタイル 10回" },
+            ],
+            "第2期": [
+                { name: "オールパーパス", goal: "15分 × 10回" },
+                { name: "メンズワインディング 波巻き", goal: "20分 × 10回" },
+                { name: "メンズワインディング ツイスパ", goal: "20分 × 10回" },
+                { name: "メンズワインディング ニュアンス", goal: "20分 × 10回" },
+                { name: "ストレート塗布", goal: "15分 × 15回" },
+                { name: "ストレートアイロン", goal: "40分 × 20回" },
+                { name: "メンズブロー", goal: "15分 × 10回" },
+                { name: "マニキュア塗布", goal: "20分 × 10回" },
+                { name: "カラー講習", goal: "3回コース" },
+            ],
+            "第3期": [
+                { name: "モデル撮影", goal: "撮影コンテスト等" },
+                { name: "ワンレングス", goal: "25分 × 15回" },
+                { name: "ナチュラルマッシュ（メンズ）", goal: "30分 × 15回" },
+                { name: "レイヤーマッシュ（メンズ）", goal: "30分 × 10回" },
+                { name: "ウルフ（マッシュウルフ）", goal: "30分 × 10回" },
+                { name: "センターパート（ネープあり）", goal: "30分 × 10回" },
+                { name: "刈り上げマッシュ（メンズ）", goal: "30分 × 10回" },
+                { name: "レイヤーショート（メンズ）", goal: "30分 × 10回" },
+                { name: "ボックスショート（メンズ）", goal: "30分 × 10回" },
+                { name: "フェードカット", goal: "soeasy参照" },
+                { name: "前髪と量感調整講習", goal: "講習" },
+            ],
+            "第4期": [
+                { name: "コピーカット", goal: "20スタイル" },
+                { name: "デビュー前面談", goal: "1H" },
+                { name: "店長講習（3人）", goal: "2H" },
+                { name: "カウンセリング講習", goal: "2H" },
+                { name: "モデル メンズマッシュ", goal: "15人" },
+                { name: "モデル メンズショート", goal: "15人" },
+                { name: "モデル メンズウルフ", goal: "5人" },
+                { name: "中間テスト", goal: "採点表を提出" },
+                { name: "モデル フェードカット", goal: "7人" },
+                { name: "モデル メンズニュアンスパーマ", goal: "5人" },
+                { name: "モデル メンズスパイラルパーマ", goal: "3人" },
+                { name: "モデル メンズツイストスパイラルパーマ", goal: "5人" },
+                { name: "モデル メンズ波巻きスパイラル", goal: "5人" },
+                { name: "モデル ピンパーマ", goal: "2人" },
+                { name: "モデル スペインカール・シャドウパーマ", goal: "5人" },
+                { name: "モデル メンズ縮毛矯正", goal: "3人" },
+                { name: "最終テスト", goal: "該当ページ参照" },
+            ],
+        },
     },
-  },
 };
-
 let _id = 100;
 const newId = () => "s" + (_id++);
-
 /* ===== GAS（スプレッドシート）接続 ===== */
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyoTybPgv3BVXwBwUBSSi_8IlnIC41L76GQkmk3W_eSsgX8NFxj1ByWChf-yy8fd5yj/exec";
-const STATUS_TO_JA = { pending:"承認待ち", approved:"合格", hold:"保留" };
-const JA_TO_STATUS = { "承認待ち":"pending", "合格":"approved", "保留":"hold" };
-
+const STATUS_TO_JA = { pending: "承認待ち", approved: "合格", hold: "保留" };
+const JA_TO_STATUS = { "承認待ち": "pending", "合格": "approved", "保留": "hold" };
 async function apiList() {
-  const res = await fetch(GAS_URL + "?action=list", { method:"GET" });
-  const data = await res.json();
-  if (!data.ok) throw new Error("list failed");
-  return data.rows.map((r) => ({
-    id:r.id, dept:r.dept, who:r.who, term:r.term, item:r.item,
-    at:r.at, photo:r.photo || null,
-    status: JA_TO_STATUS[r.status] || "pending", note:r.note || "",
-  }));
+    const res = await fetch(GAS_URL + "?action=list", { method: "GET" });
+    const data = await res.json();
+    if (!data.ok)
+        throw new Error("list failed");
+    return data.rows.map((r) => ({
+        id: r.id, dept: r.dept, who: r.who, term: r.term, item: r.item,
+        at: r.at, photo: r.photo || null,
+        status: JA_TO_STATUS[r.status] || "pending", note: r.note || "",
+    }));
 }
 async function apiPost(payload) {
-  const res = await fetch(GAS_URL, {
-    method:"POST",
-    headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body: JSON.stringify(payload),
-  });
-  return res.json();
+    const res = await fetch(GAS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+    });
+    return res.json();
 }
-
 const INITIAL = [
-  { id:newId(), dept:"regular", who:"梶内 心結", term:"第1期", item:"シャンプー", photo:null, status:"approved", at:"6/11", note:"" },
-  { id:newId(), dept:"regular", who:"大竹 椿咲", term:"第2期", item:"ワインディング", photo:null, status:"pending", at:"6/23", note:"" },
-  { id:newId(), dept:"regular", who:"青木 花歩", term:"第1期", item:"ストレートアイロン", photo:null, status:"hold", at:"6/22", note:"毛先のおさまりもう少し" },
-  { id:newId(), dept:"mens", who:"大塚 敦史", term:"第2期", item:"ストレートアイロン", photo:null, status:"pending", at:"6/23", note:"" },
+    { id: newId(), dept: "regular", who: "梶内 心結", term: "第1期", item: "シャンプー", photo: null, status: "approved", at: "6/11", note: "" },
+    { id: newId(), dept: "regular", who: "大竹 椿咲", term: "第2期", item: "ワインディング", photo: null, status: "pending", at: "6/23", note: "" },
+    { id: newId(), dept: "regular", who: "青木 花歩", term: "第1期", item: "ストレートアイロン", photo: null, status: "hold", at: "6/22", note: "毛先のおさまりもう少し" },
+    { id: newId(), dept: "mens", who: "大塚 敦史", term: "第2期", item: "ストレートアイロン", photo: null, status: "pending", at: "6/23", note: "" },
 ];
-
 function App() {
-  const [role, setRole] = useState("assistant");
-  const [dept, setDept] = useState("regular");
-  const [me, setMe] = useState(DEPTS.regular.roster[0]);
-  const [subs, setSubs] = useState(INITIAL);
-  const [zoom, setZoom] = useState(null);
-  const [conn, setConn] = useState("loading");
-
-  const load = useCallback(async () => {
-    try { const rows = await apiList(); setSubs(rows); setConn("online"); }
-    catch (e) { setSubs(INITIAL); setConn("demo"); }
-  }, []);
-  useEffect(() => { load(); }, [load]);
-
-  const switchDept = (d) => { setDept(d); setMe(DEPTS[d].roster[0]); };
-
-  const submitSub = useCallback(async ({ dept, who, term, item, photo }) => {
-    const at = new Date().toLocaleDateString("ja-JP", { month:"numeric", day:"numeric" });
-    if (conn !== "online") {
-      setSubs((p) => [...p, { id:newId(), dept, who, term, item, photo, status:"pending", at, note:"" }]);
-      return;
-    }
-    const mime = photo && photo.startsWith("data:") ? photo.substring(5, photo.indexOf(";")) : "image/jpeg";
-    const res = await apiPost({ action:"submit", dept, who, term, item, at, photoBase64:photo, photoMime:mime });
-    if (res && res.ok) {
-      setSubs((p) => [...p, { id:res.id, dept, who, term, item, photo:res.photo || photo, status:"pending", at, note:"" }]);
-    } else { throw new Error("submit failed"); }
-  }, [conn]);
-
-  const updateSub = useCallback(async (id, status, note = "") => {
-    setSubs((p) => p.map((s) => (s.id === id ? { ...s, status, note } : s)));
-    if (conn !== "online") return;
-    try { await apiPost({ action:"update", id, status:STATUS_TO_JA[status], note }); } catch (e) {}
-  }, [conn]);
-
-  return (
-    <div className="root">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-mark">GULGUL</span>
-          <span className="brand-sub">ACADEMY</span>
-        </div>
-        <div className="roleswitch" role="tablist" aria-label="役割">
-          <button role="tab" aria-selected={role==="assistant"} className={"role-btn "+(role==="assistant"?"on":"")} onClick={()=>setRole("assistant")}>
-            <User size={14}/> アシスタント
-          </button>
-          <button role="tab" aria-selected={role==="manager"} className={"role-btn "+(role==="manager"?"on":"")} onClick={()=>setRole("manager")}>
-            <ShieldCheck size={14}/> 管理側
-          </button>
-        </div>
-      </header>
-
-      <div className="deptbar">
-        <span className="deptbar-label">事業部</span>
-        {Object.entries(DEPTS).map(([k,v]) => (
-          <button key={k} className={"dept-chip "+(dept===k?"on":"")} onClick={()=>switchDept(k)}>{v.label}</button>
-        ))}
-        <span className={"connbadge "+conn} title="保存先の接続状態">
-          {conn==="online" ? "● 保存中" : conn==="loading" ? "接続中…" : "デモ表示"}
-        </span>
-      </div>
-
-      <main className="stage">
-        {role==="assistant"
-          ? <AssistantView dept={dept} me={me} setMe={setMe} subs={subs} onSubmit={submitSub} onZoom={setZoom}/>
-          : <ManagerView dept={dept} subs={subs} onUpdate={updateSub} onReload={load} onZoom={setZoom}/>}
-      </main>
-
-      {zoom && <Lightbox src={zoom} onClose={()=>setZoom(null)}/>}
-    </div>
-  );
+    const [role, setRole] = useState("assistant");
+    const [dept, setDept] = useState("regular");
+    const [me, setMe] = useState(DEPTS.regular.roster[0]);
+    const [subs, setSubs] = useState(INITIAL);
+    const [zoom, setZoom] = useState(null);
+    const [conn, setConn] = useState("loading");
+    const load = useCallback(async () => {
+        try {
+            const rows = await apiList();
+            setSubs(rows);
+            setConn("online");
+        }
+        catch (e) {
+            setSubs(INITIAL);
+            setConn("demo");
+        }
+    }, []);
+    useEffect(() => { load(); }, [load]);
+    const switchDept = (d) => { setDept(d); setMe(DEPTS[d].roster[0]); };
+    const submitSub = useCallback(async ({ dept, who, term, item, photo }) => {
+        const at = new Date().toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
+        if (conn !== "online") {
+            setSubs((p) => [...p, { id: newId(), dept, who, term, item, photo, status: "pending", at, note: "" }]);
+            return;
+        }
+        const mime = photo && photo.startsWith("data:") ? photo.substring(5, photo.indexOf(";")) : "image/jpeg";
+        const res = await apiPost({ action: "submit", dept, who, term, item, at, photoBase64: photo, photoMime: mime });
+        if (res && res.ok) {
+            setSubs((p) => [...p, { id: res.id, dept, who, term, item, photo: res.photo || photo, status: "pending", at, note: "" }]);
+        }
+        else {
+            throw new Error("submit failed");
+        }
+    }, [conn]);
+    const updateSub = useCallback(async (id, status, note = "") => {
+        setSubs((p) => p.map((s) => (s.id === id ? { ...s, status, note } : s)));
+        if (conn !== "online")
+            return;
+        try {
+            await apiPost({ action: "update", id, status: STATUS_TO_JA[status], note });
+        }
+        catch (e) { }
+    }, [conn]);
+    return (React.createElement("div", { className: "root" },
+        React.createElement("header", { className: "topbar" },
+            React.createElement("div", { className: "brand" },
+                React.createElement("span", { className: "brand-mark" }, "GULGUL"),
+                React.createElement("span", { className: "brand-sub" }, "ACADEMY")),
+            React.createElement("div", { className: "roleswitch", role: "tablist", "aria-label": "\u5F79\u5272" },
+                React.createElement("button", { role: "tab", "aria-selected": role === "assistant", className: "role-btn " + (role === "assistant" ? "on" : ""), onClick: () => setRole("assistant") },
+                    React.createElement(User, { size: 14 }),
+                    " \u30A2\u30B7\u30B9\u30BF\u30F3\u30C8"),
+                React.createElement("button", { role: "tab", "aria-selected": role === "manager", className: "role-btn " + (role === "manager" ? "on" : ""), onClick: () => setRole("manager") },
+                    React.createElement(ShieldCheck, { size: 14 }),
+                    " \u7BA1\u7406\u5074"))),
+        React.createElement("div", { className: "deptbar" },
+            React.createElement("span", { className: "deptbar-label" }, "\u4E8B\u696D\u90E8"),
+            Object.entries(DEPTS).map(([k, v]) => (React.createElement("button", { key: k, className: "dept-chip " + (dept === k ? "on" : ""), onClick: () => switchDept(k) }, v.label))),
+            React.createElement("span", { className: "connbadge " + conn, title: "\u4FDD\u5B58\u5148\u306E\u63A5\u7D9A\u72B6\u614B" }, conn === "online" ? "● 保存中" : conn === "loading" ? "接続中…" : "デモ表示")),
+        React.createElement("main", { className: "stage" }, role === "assistant"
+            ? React.createElement(AssistantView, { dept: dept, me: me, setMe: setMe, subs: subs, onSubmit: submitSub, onZoom: setZoom })
+            : React.createElement(ManagerView, { dept: dept, subs: subs, onUpdate: updateSub, onReload: load, onZoom: setZoom })),
+        zoom && React.createElement(Lightbox, { src: zoom, onClose: () => setZoom(null) })));
 }
-
 function Lightbox({ src, onClose }) {
-  const [scale, setScale] = useState(1);
-  const isPh = !src || src === "__ph__";
-  return (
-    <div className="lb" onClick={onClose}>
-      <div className="lb-bar" onClick={(e)=>e.stopPropagation()}>
-        <button className="lb-btn" onClick={()=>setScale((s)=>Math.max(1,+(s-0.5).toFixed(1)))} aria-label="縮小"><ZoomOut size={20}/></button>
-        <span className="lb-scale">{Math.round(scale*100)}%</span>
-        <button className="lb-btn" onClick={()=>setScale((s)=>Math.min(4,+(s+0.5).toFixed(1)))} aria-label="拡大"><ZoomIn size={20}/></button>
-        <button className="lb-btn lb-close" onClick={onClose} aria-label="閉じる"><X size={20}/></button>
-      </div>
-      <div className="lb-body" onClick={(e)=>e.stopPropagation()}>
-        {isPh
-          ? <div className="lb-ph">写真サンプル（本番は提出写真が拡大表示されます）</div>
-          : <img src={src} alt="提出写真の拡大" style={{ transform:`scale(${scale})` }}/>}
-      </div>
-    </div>
-  );
+    const [scale, setScale] = useState(1);
+    const isPh = !src || src === "__ph__";
+    return (React.createElement("div", { className: "lb", onClick: onClose },
+        React.createElement("div", { className: "lb-bar", onClick: (e) => e.stopPropagation() },
+            React.createElement("button", { className: "lb-btn", onClick: () => setScale((s) => Math.max(1, +(s - 0.5).toFixed(1))), "aria-label": "\u7E2E\u5C0F" },
+                React.createElement(ZoomOut, { size: 20 })),
+            React.createElement("span", { className: "lb-scale" },
+                Math.round(scale * 100),
+                "%"),
+            React.createElement("button", { className: "lb-btn", onClick: () => setScale((s) => Math.min(4, +(s + 0.5).toFixed(1))), "aria-label": "\u62E1\u5927" },
+                React.createElement(ZoomIn, { size: 20 })),
+            React.createElement("button", { className: "lb-btn lb-close", onClick: onClose, "aria-label": "\u9589\u3058\u308B" },
+                React.createElement(X, { size: 20 }))),
+        React.createElement("div", { className: "lb-body", onClick: (e) => e.stopPropagation() }, isPh
+            ? React.createElement("div", { className: "lb-ph" }, "\u5199\u771F\u30B5\u30F3\u30D7\u30EB\uFF08\u672C\u756A\u306F\u63D0\u51FA\u5199\u771F\u304C\u62E1\u5927\u8868\u793A\u3055\u308C\u307E\u3059\uFF09")
+            : React.createElement("img", { src: src, alt: "\u63D0\u51FA\u5199\u771F\u306E\u62E1\u5927", style: { transform: `scale(${scale})` } }))));
 }
-
 function AssistantView({ dept, me, setMe, subs, onSubmit, onZoom }) {
-  const [term, setTerm] = useState(null);
-  const [item, setItem] = useState(null);
-  const [photo, setPhoto] = useState(null);
-  const [flash, setFlash] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const fileRef = useRef(null);
-
-  const D = DEPTS[dept];
-  const TERMS = Object.keys(D.curriculum);
-  const mine = subs.filter((s)=>s.dept===dept && s.who===me).slice().reverse();
-  const reset = () => { setTerm(null); setItem(null); setPhoto(null); };
-
-  const onFile = (e) => {
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = () => setPhoto(r.result);
-    r.readAsDataURL(f);
-  };
-
-  const submit = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await onSubmit({ dept, who:me, term, item, photo });
-      setFlash(true); setTimeout(()=>setFlash(false), 1800); reset();
-    } catch (e) {
-      alert("提出に失敗しました。電波の良い場所でもう一度お試しください。");
-    } finally { setBusy(false); }
-  };
-
-  return (
-    <div className="col">
-      <div className="whoami">
-        <span className="whoami-label">提出者</span>
-        <select className="whoami-select" value={me} onChange={(e)=>{ setMe(e.target.value); reset(); }}>
-          {D.roster.map((n)=><option key={n}>{n}</option>)}
-        </select>
-        <span className="whoami-hint">{D.label}・ログインで固定</span>
-      </div>
-
-      {flash && <div className="flash"><Check size={16}/> 提出しました。承認待ちです</div>}
-
-      <section className="card pad">
-        <Stepline term={term} item={item}/>
-        {!term && (
-          <React.Fragment>
-            <h2 className="h2">どの期ですか？</h2>
-            <p className="muted sm">順番通りでなくてOK。今やっている期を選んでください</p>
-            <div className="grid2">
-              {TERMS.map((t)=>(
-                <button key={t} className="pick" onClick={()=>setTerm(t)}>
-                  <span className="pick-big">{t}</span>
-                  <span className="pick-sub">{D.curriculum[t].length} 項目</span>
-                </button>
-              ))}
-            </div>
-          </React.Fragment>
-        )}
-        {term && !item && (
-          <React.Fragment>
-            <button className="back" onClick={()=>setTerm(null)}><ChevronLeft size={16}/> 期を選び直す</button>
-            <h2 className="h2">{term}・どの項目ですか？</h2>
-            <div className="list">
-              {D.curriculum[term].map((it)=>(
-                <button key={it.name} className="row" onClick={()=>setItem(it.name)}>
-                  <span className="row-name">{it.name}</span>
-                  <span className="row-goal"><Clock size={13}/> {it.goal}</span>
-                </button>
-              ))}
-            </div>
-          </React.Fragment>
-        )}
-        {term && item && (
-          <React.Fragment>
-            <button className="back" onClick={()=>setItem(null)}><ChevronLeft size={16}/> 項目を選び直す</button>
-            <h2 className="h2">{item}</h2>
-            <p className="muted sm">{D.label}・{term}</p>
-            {!photo
-              ? <button className="dropzone" onClick={()=>fileRef.current && fileRef.current.click()}>
-                  <Camera size={28}/>
-                  <span className="dz-main">写真をとる / 選ぶ</span>
-                  <span className="dz-sub">練習シートを撮影してください</span>
-                </button>
-              : <div className="preview">
-                  <img src={photo} alt="提出する写真" onClick={()=>onZoom(photo)}/>
-                  <button className="preview-x" onClick={()=>setPhoto(null)} aria-label="写真を消す"><X size={16}/></button>
-                </div>}
-            <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile}/>
-            <button className="submit" disabled={!photo || busy} onClick={submit}>
-              <Upload size={17}/> {busy ? "送信中…" : "提出する"}
-            </button>
-          </React.Fragment>
-        )}
-      </section>
-
-      <section className="card pad">
-        <h3 className="h3">わたしの提出</h3>
-        {mine.length===0 && <p className="muted sm">まだ提出はありません</p>}
-        <div className="mine-list">
-          {mine.map((s)=>(
-            <div key={s.id} className="mine-row">
-              <div className="mine-text">
-                <span className="tag">{s.term}</span>
-                <span className="mine-item">{s.item}</span>
-                {s.status==="hold" && s.note && <span className="mine-note">メモ：{s.note}</span>}
-              </div>
-              <StatusPill status={s.status}/>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
+    const [term, setTerm] = useState(null);
+    const [item, setItem] = useState(null);
+    const [photo, setPhoto] = useState(null);
+    const [flash, setFlash] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const fileRef = useRef(null);
+    const D = DEPTS[dept];
+    const TERMS = Object.keys(D.curriculum);
+    const mine = subs.filter((s) => s.dept === dept && s.who === me).slice().reverse();
+    const reset = () => { setTerm(null); setItem(null); setPhoto(null); };
+    const onFile = (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f)
+            return;
+        const r = new FileReader();
+        r.onload = () => setPhoto(r.result);
+        r.readAsDataURL(f);
+    };
+    const submit = async () => {
+        if (busy)
+            return;
+        setBusy(true);
+        try {
+            await onSubmit({ dept, who: me, term, item, photo });
+            setFlash(true);
+            setTimeout(() => setFlash(false), 1800);
+            reset();
+        }
+        catch (e) {
+            alert("提出に失敗しました。電波の良い場所でもう一度お試しください。");
+        }
+        finally {
+            setBusy(false);
+        }
+    };
+    return (React.createElement("div", { className: "col" },
+        React.createElement("div", { className: "whoami" },
+            React.createElement("span", { className: "whoami-label" }, "\u63D0\u51FA\u8005"),
+            React.createElement("select", { className: "whoami-select", value: me, onChange: (e) => { setMe(e.target.value); reset(); } }, D.roster.map((n) => React.createElement("option", { key: n }, n))),
+            React.createElement("span", { className: "whoami-hint" },
+                D.label,
+                "\u30FB\u30ED\u30B0\u30A4\u30F3\u3067\u56FA\u5B9A")),
+        flash && React.createElement("div", { className: "flash" },
+            React.createElement(Check, { size: 16 }),
+            " \u63D0\u51FA\u3057\u307E\u3057\u305F\u3002\u627F\u8A8D\u5F85\u3061\u3067\u3059"),
+        React.createElement("section", { className: "card pad" },
+            React.createElement(Stepline, { term: term, item: item }),
+            !term && (React.createElement(React.Fragment, null,
+                React.createElement("h2", { className: "h2" }, "\u3069\u306E\u671F\u3067\u3059\u304B\uFF1F"),
+                React.createElement("p", { className: "muted sm" }, "\u9806\u756A\u901A\u308A\u3067\u306A\u304F\u3066OK\u3002\u4ECA\u3084\u3063\u3066\u3044\u308B\u671F\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044"),
+                React.createElement("div", { className: "grid2" }, TERMS.map((t) => (React.createElement("button", { key: t, className: "pick", onClick: () => setTerm(t) },
+                    React.createElement("span", { className: "pick-big" }, t),
+                    React.createElement("span", { className: "pick-sub" },
+                        D.curriculum[t].length,
+                        " \u9805\u76EE"))))))),
+            term && !item && (React.createElement(React.Fragment, null,
+                React.createElement("button", { className: "back", onClick: () => setTerm(null) },
+                    React.createElement(ChevronLeft, { size: 16 }),
+                    " \u671F\u3092\u9078\u3073\u76F4\u3059"),
+                React.createElement("h2", { className: "h2" },
+                    term,
+                    "\u30FB\u3069\u306E\u9805\u76EE\u3067\u3059\u304B\uFF1F"),
+                React.createElement("div", { className: "list" }, D.curriculum[term].map((it) => (React.createElement("button", { key: it.name, className: "row", onClick: () => setItem(it.name) },
+                    React.createElement("span", { className: "row-name" }, it.name),
+                    React.createElement("span", { className: "row-goal" },
+                        React.createElement(Clock, { size: 13 }),
+                        " ",
+                        it.goal))))))),
+            term && item && (React.createElement(React.Fragment, null,
+                React.createElement("button", { className: "back", onClick: () => setItem(null) },
+                    React.createElement(ChevronLeft, { size: 16 }),
+                    " \u9805\u76EE\u3092\u9078\u3073\u76F4\u3059"),
+                React.createElement("h2", { className: "h2" }, item),
+                React.createElement("p", { className: "muted sm" },
+                    D.label,
+                    "\u30FB",
+                    term),
+                !photo
+                    ? React.createElement("button", { className: "dropzone", onClick: () => fileRef.current && fileRef.current.click() },
+                        React.createElement(Camera, { size: 28 }),
+                        React.createElement("span", { className: "dz-main" }, "\u5199\u771F\u3092\u3068\u308B / \u9078\u3076"),
+                        React.createElement("span", { className: "dz-sub" }, "\u7DF4\u7FD2\u30B7\u30FC\u30C8\u3092\u64AE\u5F71\u3057\u3066\u304F\u3060\u3055\u3044"))
+                    : React.createElement("div", { className: "preview" },
+                        React.createElement("img", { src: photo, alt: "\u63D0\u51FA\u3059\u308B\u5199\u771F", onClick: () => onZoom(photo) }),
+                        React.createElement("button", { className: "preview-x", onClick: () => setPhoto(null), "aria-label": "\u5199\u771F\u3092\u6D88\u3059" },
+                            React.createElement(X, { size: 16 }))),
+                React.createElement("input", { ref: fileRef, type: "file", accept: "image/*", capture: "environment", hidden: true, onChange: onFile }),
+                React.createElement("button", { className: "submit", disabled: !photo || busy, onClick: submit },
+                    React.createElement(Upload, { size: 17 }),
+                    " ",
+                    busy ? "送信中…" : "提出する")))),
+        React.createElement("section", { className: "card pad" },
+            React.createElement("h3", { className: "h3" }, "\u308F\u305F\u3057\u306E\u63D0\u51FA"),
+            mine.length === 0 && React.createElement("p", { className: "muted sm" }, "\u307E\u3060\u63D0\u51FA\u306F\u3042\u308A\u307E\u305B\u3093"),
+            React.createElement("div", { className: "mine-list" }, mine.map((s) => (React.createElement("div", { key: s.id, className: "mine-row" },
+                React.createElement("div", { className: "mine-text" },
+                    React.createElement("span", { className: "tag" }, s.term),
+                    React.createElement("span", { className: "mine-item" }, s.item),
+                    s.status === "hold" && s.note && React.createElement("span", { className: "mine-note" },
+                        "\u30E1\u30E2\uFF1A",
+                        s.note)),
+                React.createElement(StatusPill, { status: s.status }))))))));
 }
-
 function Stepline({ term, item }) {
-  const step = item ? 3 : term ? 2 : 1;
-  const labels = ["期","項目","写真"];
-  return (
-    <div className="stepline">
-      {labels.map((l,i)=>(
-        <React.Fragment key={l}>
-          <div className={"step "+(step>=i+1?"done":"")+" "+(step===i+1?"now":"")}>
-            <span className="step-dot">{i+1}</span>
-            <span className="step-label">{l}</span>
-          </div>
-          {i<2 && <span className={"step-bar "+(step>i+1?"done":"")}/>}
-        </React.Fragment>
-      ))}
-    </div>
-  );
+    const step = item ? 3 : term ? 2 : 1;
+    const labels = ["期", "項目", "写真"];
+    return (React.createElement("div", { className: "stepline" }, labels.map((l, i) => (React.createElement(React.Fragment, { key: l },
+        React.createElement("div", { className: "step " + (step >= i + 1 ? "done" : "") + " " + (step === i + 1 ? "now" : "") },
+            React.createElement("span", { className: "step-dot" }, i + 1),
+            React.createElement("span", { className: "step-label" }, l)),
+        i < 2 && React.createElement("span", { className: "step-bar " + (step > i + 1 ? "done" : "") }))))));
 }
-
 function ManagerView({ dept, subs, onUpdate, onReload, onZoom }) {
-  const [filter, setFilter] = useState("pending");
-  const list = useMemo(()=>{
-    const arr = subs.filter((s)=>s.dept===dept).slice().reverse();
-    if (filter==="all") return arr;
-    return arr.filter((s)=>s.status===filter);
-  }, [subs, dept, filter]);
-
-  const inDept = subs.filter((s)=>s.dept===dept);
-  const pendingCount = inDept.filter((s)=>s.status==="pending").length;
-  const holdCount = inDept.filter((s)=>s.status==="hold").length;
-  const approvedCount = inDept.filter((s)=>s.status==="approved").length;
-
-  const approve = (id)=>onUpdate(id,"approved","");
-  const hold = (id,note)=>onUpdate(id,"hold",note);
-  const undo = (id)=>onUpdate(id,"pending","");
-  const emptyMsg = filter==="hold" ? "保留はありません" : filter==="pending" ? "承認待ちはありません" : "提出はありません";
-
-  return (
-    <div className="col">
-      <section className="summary">
-        <div className="sumcell"><span className="sumnum">{pendingCount}</span><span className="sumlbl">承認待ち</span></div>
-        <div className="sumdiv"/>
-        <div className="sumcell"><span className="sumnum num-hold">{holdCount}</span><span className="sumlbl">保留</span></div>
-        <div className="sumdiv"/>
-        <div className="sumcell"><span className="sumnum num-ok">{approvedCount}</span><span className="sumlbl">合格</span></div>
-      </section>
-      <div className="filter">
-        <button className={"fbtn "+(filter==="pending"?"on":"")} onClick={()=>setFilter("pending")}>承認待ち</button>
-        <button className={"fbtn "+(filter==="hold"?"on":"")} onClick={()=>setFilter("hold")}>保留</button>
-        <button className={"fbtn "+(filter==="all"?"on":"")} onClick={()=>setFilter("all")}>すべて</button>
-        {onReload && <button className="fbtn reload" onClick={onReload} title="最新に更新"><RotateCcw size={14}/></button>}
-      </div>
-      {list.length===0 && <div className="card pad empty"><Check size={22}/><p>{emptyMsg}</p></div>}
-      <div className="mgr-grid">
-        {list.map((s)=>(
-          <SubCard key={s.id} sub={s} onApprove={approve} onHold={hold} onUndo={undo} onZoom={onZoom}/>
-        ))}
-      </div>
-    </div>
-  );
+    const [filter, setFilter] = useState("pending");
+    const list = useMemo(() => {
+        const arr = subs.filter((s) => s.dept === dept).slice().reverse();
+        if (filter === "all")
+            return arr;
+        return arr.filter((s) => s.status === filter);
+    }, [subs, dept, filter]);
+    const inDept = subs.filter((s) => s.dept === dept);
+    const pendingCount = inDept.filter((s) => s.status === "pending").length;
+    const holdCount = inDept.filter((s) => s.status === "hold").length;
+    const approvedCount = inDept.filter((s) => s.status === "approved").length;
+    const approve = (id) => onUpdate(id, "approved", "");
+    const hold = (id, note) => onUpdate(id, "hold", note);
+    const undo = (id) => onUpdate(id, "pending", "");
+    const emptyMsg = filter === "hold" ? "保留はありません" : filter === "pending" ? "承認待ちはありません" : "提出はありません";
+    return (React.createElement("div", { className: "col" },
+        React.createElement("section", { className: "summary" },
+            React.createElement("div", { className: "sumcell" },
+                React.createElement("span", { className: "sumnum" }, pendingCount),
+                React.createElement("span", { className: "sumlbl" }, "\u627F\u8A8D\u5F85\u3061")),
+            React.createElement("div", { className: "sumdiv" }),
+            React.createElement("div", { className: "sumcell" },
+                React.createElement("span", { className: "sumnum num-hold" }, holdCount),
+                React.createElement("span", { className: "sumlbl" }, "\u4FDD\u7559")),
+            React.createElement("div", { className: "sumdiv" }),
+            React.createElement("div", { className: "sumcell" },
+                React.createElement("span", { className: "sumnum num-ok" }, approvedCount),
+                React.createElement("span", { className: "sumlbl" }, "\u5408\u683C"))),
+        React.createElement("div", { className: "filter" },
+            React.createElement("button", { className: "fbtn " + (filter === "pending" ? "on" : ""), onClick: () => setFilter("pending") }, "\u627F\u8A8D\u5F85\u3061"),
+            React.createElement("button", { className: "fbtn " + (filter === "hold" ? "on" : ""), onClick: () => setFilter("hold") }, "\u4FDD\u7559"),
+            React.createElement("button", { className: "fbtn " + (filter === "all" ? "on" : ""), onClick: () => setFilter("all") }, "\u3059\u3079\u3066"),
+            onReload && React.createElement("button", { className: "fbtn reload", onClick: onReload, title: "\u6700\u65B0\u306B\u66F4\u65B0" },
+                React.createElement(RotateCcw, { size: 14 }))),
+        list.length === 0 && React.createElement("div", { className: "card pad empty" },
+            React.createElement(Check, { size: 22 }),
+            React.createElement("p", null, emptyMsg)),
+        React.createElement("div", { className: "mgr-grid" }, list.map((s) => (React.createElement(SubCard, { key: s.id, sub: s, onApprove: approve, onHold: hold, onUndo: undo, onZoom: onZoom }))))));
 }
-
-function SubCard({ sub:s, onApprove, onHold, onUndo, onZoom }) {
-  const [holdOpen, setHoldOpen] = useState(false);
-  const [note, setNote] = useState("");
-  const confirmHold = () => { onHold(s.id, note.trim()); setHoldOpen(false); setNote(""); };
-  return (
-    <article className={"subcard "+(s.status==="approved"?"stamped":"")+" "+(s.status==="hold"?"isheld":"")}>
-      <button className="subphoto" onClick={()=>onZoom(s.photo || "__ph__")} aria-label="写真を拡大">
-        {s.photo ? <img src={s.photo} alt={s.who+"の提出"}/> : <PhotoPlaceholder/>}
-        <span className="zoomhint"><ZoomIn size={15}/> タップで拡大</span>
-        {s.status==="approved" && <div className="stamp"><span>合<br/>格</span></div>}
-        {s.status==="hold" && <div className="stamp hold"><span>保<br/>留</span></div>}
-      </button>
-      <div className="subbody">
-        <div className="subhead">
-          <span className="subwho">{s.who}</span>
-          <span className="subat">{s.at}</span>
-        </div>
-        <div className="submeta"><span className="tag">{s.term}</span><span className="subitem">{s.item}</span></div>
-        {s.status==="hold" && s.note && <p className="holdnote">メモ：{s.note}</p>}
-        {s.status==="pending" && !holdOpen && (
-          <div className="btnrow">
-            <button className="approve" onClick={()=>onApprove(s.id)}><Check size={16}/> 合格にする</button>
-            <button className="holdbtn" onClick={()=>setHoldOpen(true)}>保留</button>
-          </div>
-        )}
-        {s.status==="pending" && holdOpen && (
-          <div className="holdbox">
-            <textarea className="holdinput" rows={2} value={note} onChange={(e)=>setNote(e.target.value)}
-              placeholder="ひとことメモ（任意）　例：巻き直し / タイムもう少し"/>
-            <div className="btnrow">
-              <button className="holdconfirm" onClick={confirmHold}>保留にする</button>
-              <button className="holdcancel" onClick={()=>{ setHoldOpen(false); setNote(""); }}>やめる</button>
-            </div>
-          </div>
-        )}
-        {(s.status==="approved" || s.status==="hold") && (
-          <button className="undo" onClick={()=>onUndo(s.id)}><RotateCcw size={14}/> 承認待ちに戻す</button>
-        )}
-      </div>
-    </article>
-  );
+function SubCard({ sub: s, onApprove, onHold, onUndo, onZoom }) {
+    const [holdOpen, setHoldOpen] = useState(false);
+    const [note, setNote] = useState("");
+    const confirmHold = () => { onHold(s.id, note.trim()); setHoldOpen(false); setNote(""); };
+    return (React.createElement("article", { className: "subcard " + (s.status === "approved" ? "stamped" : "") + " " + (s.status === "hold" ? "isheld" : "") },
+        React.createElement("button", { className: "subphoto", onClick: () => onZoom(s.photo || "__ph__"), "aria-label": "\u5199\u771F\u3092\u62E1\u5927" },
+            s.photo ? React.createElement("img", { src: s.photo, alt: s.who + "の提出" }) : React.createElement(PhotoPlaceholder, null),
+            React.createElement("span", { className: "zoomhint" },
+                React.createElement(ZoomIn, { size: 15 }),
+                " \u30BF\u30C3\u30D7\u3067\u62E1\u5927"),
+            s.status === "approved" && React.createElement("div", { className: "stamp" },
+                React.createElement("span", null,
+                    "\u5408",
+                    React.createElement("br", null),
+                    "\u683C")),
+            s.status === "hold" && React.createElement("div", { className: "stamp hold" },
+                React.createElement("span", null,
+                    "\u4FDD",
+                    React.createElement("br", null),
+                    "\u7559"))),
+        React.createElement("div", { className: "subbody" },
+            React.createElement("div", { className: "subhead" },
+                React.createElement("span", { className: "subwho" }, s.who),
+                React.createElement("span", { className: "subat" }, s.at)),
+            React.createElement("div", { className: "submeta" },
+                React.createElement("span", { className: "tag" }, s.term),
+                React.createElement("span", { className: "subitem" }, s.item)),
+            s.status === "hold" && s.note && React.createElement("p", { className: "holdnote" },
+                "\u30E1\u30E2\uFF1A",
+                s.note),
+            s.status === "pending" && !holdOpen && (React.createElement("div", { className: "btnrow" },
+                React.createElement("button", { className: "approve", onClick: () => onApprove(s.id) },
+                    React.createElement(Check, { size: 16 }),
+                    " \u5408\u683C\u306B\u3059\u308B"),
+                React.createElement("button", { className: "holdbtn", onClick: () => setHoldOpen(true) }, "\u4FDD\u7559"))),
+            s.status === "pending" && holdOpen && (React.createElement("div", { className: "holdbox" },
+                React.createElement("textarea", { className: "holdinput", rows: 2, value: note, onChange: (e) => setNote(e.target.value), placeholder: "\u3072\u3068\u3053\u3068\u30E1\u30E2\uFF08\u4EFB\u610F\uFF09\u3000\u4F8B\uFF1A\u5DFB\u304D\u76F4\u3057 / \u30BF\u30A4\u30E0\u3082\u3046\u5C11\u3057" }),
+                React.createElement("div", { className: "btnrow" },
+                    React.createElement("button", { className: "holdconfirm", onClick: confirmHold }, "\u4FDD\u7559\u306B\u3059\u308B"),
+                    React.createElement("button", { className: "holdcancel", onClick: () => { setHoldOpen(false); setNote(""); } }, "\u3084\u3081\u308B")))),
+            (s.status === "approved" || s.status === "hold") && (React.createElement("button", { className: "undo", onClick: () => onUndo(s.id) },
+                React.createElement(RotateCcw, { size: 14 }),
+                " \u627F\u8A8D\u5F85\u3061\u306B\u623B\u3059")))));
 }
-
 function PhotoPlaceholder() {
-  return (
-    <div className="ph">
-      <div className="ph-lines"><span/><span/><span/><span/><span/></div>
-      <span className="ph-cap">練習シート</span>
-    </div>
-  );
+    return (React.createElement("div", { className: "ph" },
+        React.createElement("div", { className: "ph-lines" },
+            React.createElement("span", null),
+            React.createElement("span", null),
+            React.createElement("span", null),
+            React.createElement("span", null),
+            React.createElement("span", null)),
+        React.createElement("span", { className: "ph-cap" }, "\u7DF4\u7FD2\u30B7\u30FC\u30C8")));
 }
-
 function StatusPill({ status }) {
-  if (status==="approved") return <span className="pill pill-ok"><Check size={13}/> 合格</span>;
-  if (status==="hold") return <span className="pill pill-hold">保留</span>;
-  return <span className="pill pill-wait">承認待ち</span>;
+    if (status === "approved")
+        return React.createElement("span", { className: "pill pill-ok" },
+            React.createElement(Check, { size: 13 }),
+            " \u5408\u683C");
+    if (status === "hold")
+        return React.createElement("span", { className: "pill pill-hold" }, "\u4FDD\u7559");
+    return React.createElement("span", { className: "pill pill-wait" }, "\u627F\u8A8D\u5F85\u3061");
 }
+ReactDOM.createRoot(document.getElementById("app")).render(React.createElement(App, null));
 
-ReactDOM.createRoot(document.getElementById("app")).render(<App/>);
 </script>
 </body>
 </html>
